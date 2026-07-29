@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.zihaobai.xiaobaipinxie</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/zihaobai/Documents/小白单词/.venv/bin/python</string>
+    <string>-m</string>
+    <string>streamlit</string>
+    <string>run</string>
+    <string>/Users/zihaobai/Documents/小白单词/app.py</string>
+    <string>--server.address</string>
+    <string>127.0.0.1</string>
+    <string>--server.port</string>
+    <string>8501</string>
+    <string>--server.headless</string>
+    <string>true</string>
+    <string>--browser.gatherUsageStats</string>
+    <string>false</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/zihaobai/Documents/小白单词</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+  <key>KeepAlive</key>
+  <false/>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+  <key>ThrottleInterval</key>
+  <integer>3</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/zihaobai/Documents/小白单词/.runtime/streamlit-launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/zihaobai/Documents/小白单词/.runtime/streamlit-launchd.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+  </dict>
+</dict>
+</plist>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="base" x1="160" y1="110" x2="864" y2="918" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#29BC94"/>
+      <stop offset="0.55" stop-color="#109B78"/>
+      <stop offset="1" stop-color="#08715A"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientTransform="translate(760 218) rotate(132) scale(430)">
+      <stop stop-color="#FFFFFF" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="34" stdDeviation="36" flood-color="#153D34" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect x="82" y="62" width="860" height="860" rx="230" fill="url(#base)" filter="url(#shadow)"/>
+  <rect x="82" y="62" width="860" height="860" rx="230" fill="url(#shine)"/>
+  <rect x="110" y="90" width="804" height="804" rx="205" fill="none" stroke="#FFFFFF" stroke-opacity=".28" stroke-width="8"/>
+  <text x="512" y="632" text-anchor="middle"
+        font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif"
+        font-size="380" font-weight="760" fill="#FFFFFF">拼</text>
+  <circle cx="785" cy="752" r="72" fill="#FFD27D"/>
+  <circle cx="785" cy="752" r="48" fill="#FFE3A8"/>
+  <circle cx="760" cy="727" r="17" fill="#FFFFFF" fill-opacity=".6"/>
+</svg>

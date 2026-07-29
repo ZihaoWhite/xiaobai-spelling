@@ -1,0 +1,61 @@
+#!/bin/zsh
+
+set -u
+
+PROJECT_DIR="/Users/zihaobai/Documents/小白单词"
+PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
+APP_FILE="$PROJECT_DIR/app.py"
+RUNTIME_DIR="$PROJECT_DIR/.runtime"
+LOG_FILE="$RUNTIME_DIR/streamlit-launchd.log"
+SERVICE_LABEL="com.zihaobai.xiaobaipinxie"
+SERVICE_PLIST="/Users/zihaobai/Library/LaunchAgents/$SERVICE_LABEL.plist"
+SERVICE_DOMAIN="gui/$(/usr/bin/id -u)"
+PORT="8501"
+APP_URL="http://127.0.0.1:$PORT"
+HEALTH_URL="$APP_URL/_stcore/health"
+
+is_ready() {
+    /usr/bin/curl -fsS --max-time 1 "$HEALTH_URL" >/dev/null 2>&1
+}
+
+if [[ ! -x "$PYTHON_BIN" ]]; then
+    /usr/bin/osascript -e \
+        'display dialog "项目的 Python 环境不存在，请先在项目目录安装依赖。" with title "小白拼写暂时无法启动" buttons {"好"} default button "好" with icon stop'
+    exit 1
+fi
+
+if [[ ! -f "$APP_FILE" ]]; then
+    /usr/bin/osascript -e \
+        'display dialog "没有找到 app.py，请确认项目文件夹没有被移动。" with title "小白拼写暂时无法启动" buttons {"好"} default button "好" with icon stop'
+    exit 1
+fi
+
+/bin/mkdir -p "$RUNTIME_DIR"
+
+if ! is_ready; then
+    if [[ ! -f "$SERVICE_PLIST" ]]; then
+        /usr/bin/osascript -e \
+            'display dialog "没有找到后台服务配置，请重新安装 Dock 启动器。" with title "小白拼写暂时无法启动" buttons {"好"} default button "好" with icon stop'
+        exit 1
+    fi
+
+    if ! /bin/launchctl print "$SERVICE_DOMAIN/$SERVICE_LABEL" >/dev/null 2>&1; then
+        /bin/launchctl bootstrap "$SERVICE_DOMAIN" "$SERVICE_PLIST" >/dev/null 2>&1
+    fi
+    /bin/launchctl kickstart -k "$SERVICE_DOMAIN/$SERVICE_LABEL" >/dev/null 2>&1
+
+    for _attempt in {1..40}; do
+        if is_ready; then
+            break
+        fi
+        /bin/sleep 0.25
+    done
+fi
+
+if is_ready; then
+    /usr/bin/open "$APP_URL"
+else
+    /usr/bin/osascript -e \
+        'display dialog "请查看项目中的 .runtime/streamlit-launchd.log 获取详细原因。" with title "小白拼写启动超时" buttons {"好"} default button "好" with icon caution'
+    exit 1
+fi
