@@ -7,6 +7,7 @@ import pytest
 from app import (
     CsvValidationError,
     build_audio_url,
+    build_ai_batch_items,
     build_file_label,
     build_letter_diff_cells,
     build_question_order,
@@ -175,3 +176,11 @@ def test_no_standard_library_dependency_is_expected() -> None:
     requirements = (Path(__file__).parents[1] / "requirements.txt").read_text()
     assert "pathlib" not in requirements
     assert "difflib" not in requirements
+
+
+def test_ai_batch_items_cover_all_unique_missing_words() -> None:
+    frame = valid_dataframe()
+    pending, skipped = build_ai_batch_items(frame, {"promote"})
+    assert skipped == 1
+    assert [item["word"] for item in pending] == ["well-being"]
+    assert pending[0]["meaning"] == "幸福；健康"

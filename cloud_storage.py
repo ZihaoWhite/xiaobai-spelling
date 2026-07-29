@@ -382,6 +382,24 @@ class SupabaseStorage:
         bundle = rows[0].get("bundle")
         return bundle if isinstance(bundle, dict) else None
 
+    def list_ai_card_words(self) -> set[str]:
+        rows = self._request(
+            "GET",
+            AI_CARDS_TABLE,
+            query={
+                "select": "normalized_word",
+                "order": "normalized_word.asc",
+            },
+        )
+        if not isinstance(rows, list):
+            raise CloudStorageError("无法读取 AI 记忆卡列表。")
+        return {
+            str(row.get("normalized_word") or "").strip().casefold()
+            for row in rows
+            if isinstance(row, dict)
+            and str(row.get("normalized_word") or "").strip()
+        }
+
     def save_ai_card(self, word: str, bundle: dict[str, Any]) -> None:
         normalized = str(word).strip().casefold()
         self._request(

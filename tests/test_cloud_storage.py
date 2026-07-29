@@ -208,3 +208,20 @@ def test_list_learned_words_reads_aggregate_view() -> None:
     rows = storage.list_learned_words()
     assert rows[0]["word"] == "apple"
     assert rows[0]["has_ai_card"] is True
+
+
+def test_list_ai_card_words_returns_normalized_set() -> None:
+    def fake_urlopen(request, timeout, context):
+        assert "/rest/v1/xb_ai_cards" in request.full_url
+        return FakeResponse(
+            [
+                {"normalized_word": "apple"},
+                {"normalized_word": "Well-Being"},
+            ]
+        )
+
+    storage = SupabaseStorage(
+        SupabaseConfig("https://example.supabase.co", "server-secret"),
+        urlopen_fn=fake_urlopen,
+    )
+    assert storage.list_ai_card_words() == {"apple", "well-being"}

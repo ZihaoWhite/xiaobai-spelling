@@ -10,6 +10,7 @@ import random
 import re
 import shutil
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable, Sequence
@@ -1547,6 +1548,35 @@ def inject_css() -> None:
             color: #303a50;
             font-size: 1rem;
         }
+        .xb-batch-panel {
+            margin: .1rem 0 1rem;
+            padding: 1rem 1.05rem;
+            border: 1px solid #e1e3ea;
+            border-radius: 18px;
+            background:
+                radial-gradient(circle at 94% 0%, rgba(244, 207, 179, .22), transparent 15rem),
+                rgba(255, 255, 255, .76);
+            box-shadow: 0 12px 38px rgba(40, 46, 67, .055);
+        }
+        .xb-batch-title {
+            color: #303a50;
+            font-size: .92rem;
+            font-weight: 720;
+        }
+        .xb-batch-note {
+            margin-top: .22rem;
+            color: #758093;
+            font-size: .75rem;
+            line-height: 1.6;
+        }
+        .xb-batch-current {
+            margin: .65rem 0;
+            padding: .62rem .72rem;
+            border-radius: 11px;
+            color: #4d5870;
+            background: #f2f3f8;
+            font-size: .78rem;
+        }
         .xb-review-word-card {
             min-height: 235px;
             padding: 1.35rem 1.3rem;
@@ -1995,6 +2025,7 @@ def initialize_state_defaults() -> None:
         "pending_review_row": None,
         "learned_words_cache": None,
         "learned_words_error": "",
+        "ai_batch_job": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -2459,6 +2490,8 @@ def render_header() -> None:
         layout_status = "复习模式 · 单词与记忆卡联动"
     elif st.session_state.app_view == "已学词本":
         layout_status = "长期词本 · 跨日期累计复习"
+    elif st.session_state.app_view == "批量 AI":
+        layout_status = "批量生成 · 自动跳过已有卡片"
     else:
         layout_status = (
             "双栏学习 · 拼写与记忆并行"
@@ -3370,6 +3403,317 @@ def render_learned_notebook() -> None:
         )
 
 
+def build_ai_batch_items(
+    dataframe: pd.DataFrame,
+    existing_words: set[str] | None = None,
+) -> tuple[list[dict[str, str]], int]:
+    """Return unique missing words in CSV order and the existing-card count."""
+    existing = {
+        normalize_answer(word)
+        for word in (existing_words or set())
+        if normalize_answer(word)
+    }
+    seen: set[str] = set()
+    pending: list[dict[str, str]] = []
+    skipped = 0
+    for _, row in dataframe.iterrows():
+        word = str(row.get("单词", "")).strip()
+        normalized = normalize_answer(word)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        if normalized in existing:
+            skipped += 1
+            continue
+        _, cleaned_meaning = extract_part_of_speech(
+            str(row.get("中文释义", ""))
+        )
+        pending.append(
+            {
+                "word": word,
+                "normalized_word": normalized,
+                "meaning": cleaned_meaning
+                or str(row.get("中文释义", "")).strip()
+                or "暂无释义",
+            }
+        )
+    return pending, skipped
+
+
+def start_ai_batch_job() -> dict[str, Any]:
+    storage = get_supabase_storage()
+    existing = set(st.session_state.learning_cards)
+    cloud_warning = ""
+    if storage is not None:
+        try:
+            list_words = getattr(storage, "list_ai_card_words", None)
+            if not callable(list_words):
+                raise AttributeError("cloud storage client needs a restart")
+            existing.update(list_words())
+        except AttributeError:
+            cloud_warning = "云端组件仍是旧版本，请重启应用后再开始。"
+        except CloudStorageError as exc:
+            cloud_warning = f"云端查重暂时失败：{exc}"
+
+    # Local files are a second source of truth and make interrupted jobs
+    # resumable even before their cloud cache is refreshed.
+    unique_words = {
+        str(word).strip()
+        for word in st.session_state.df["单词"].tolist()
+        if str(word).strip()
+    }
+    for word in unique_words:
+        normalized = normalize_answer(word)
+        if normalized in existing:
+            continue
+        cached = load_cached_bundle(LEARNING_CACHE_DIR, word)
+        if cached is not None:
+            existing.add(normalized)
+            st.session_state.learning_cards[normalized] = cached
+
+    pending, skipped = build_ai_batch_items(st.session_state.df, existing)
+    now = datetime.now().isoformat(timespec="seconds")
+    return {
+        "status": "running" if pending and not cloud_warning else "paused",
+        "queue": pending,
+        "total": len(pending) + skipped,
+        "target_count": len(pending),
+        "skipped": skipped,
+        "completed": 0,
+        "failed": [],
+        "sync_warnings": [],
+        "current_word": "",
+        "started_at": now,
+        "last_call_started": 0.0,
+        "consecutive_failures": 0,
+        "message": cloud_warning,
+    }
+
+
+def process_next_ai_batch_item(job: dict[str, Any]) -> None:
+    if job.get("status") != "running" or not job.get("queue"):
+        return
+    api_key, models = get_nvidia_settings()
+    if not api_key or not models:
+        job["status"] = "paused"
+        job["message"] = "NVIDIA API 尚未配置，任务已暂停。"
+        return
+
+    item = dict(job["queue"][0])
+    job["current_word"] = item["word"]
+    minimum_interval = 1.65
+    elapsed = time.monotonic() - float(job.get("last_call_started") or 0.0)
+    if elapsed < minimum_interval:
+        time.sleep(minimum_interval - elapsed)
+    job["last_call_started"] = time.monotonic()
+
+    try:
+        generated = generate_learning_bundle(
+            word=item["word"],
+            chinese_meaning=item["meaning"],
+            api_key=api_key,
+            models=models,
+            cache_dir=LEARNING_CACHE_DIR,
+        )
+    except LearningAssistantError as exc:
+        job["failed"].append({**item, "error": str(exc)})
+        job["consecutive_failures"] = (
+            int(job.get("consecutive_failures") or 0) + 1
+        )
+    else:
+        normalized = item["normalized_word"]
+        st.session_state.learning_cards[normalized] = generated
+        storage = get_supabase_storage()
+        sync_failed = False
+        if storage is not None:
+            try:
+                storage.save_ai_card(item["word"], generated)
+            except CloudStorageError as exc:
+                job["sync_warnings"].append(
+                    {"word": item["word"], "error": str(exc)}
+                )
+                job["failed"].append(
+                    {
+                        **item,
+                        "error": f"AI 已生成并保存在本地，但云端同步失败：{exc}",
+                    }
+                )
+                job["consecutive_failures"] = (
+                    int(job.get("consecutive_failures") or 0) + 1
+                )
+                sync_failed = True
+            else:
+                st.session_state.learned_words_cache = None
+        if not sync_failed:
+            job["completed"] = int(job.get("completed") or 0) + 1
+            job["consecutive_failures"] = 0
+
+    del job["queue"][0]
+    if int(job.get("consecutive_failures") or 0) >= 3:
+        job["status"] = "paused"
+        job["message"] = "连续 3 个单词生成失败，任务已自动暂停。"
+    elif not job["queue"]:
+        job["status"] = "completed"
+        job["current_word"] = ""
+        job["message"] = "当前词表的批量生成任务已经完成。"
+
+
+def render_ai_batch_center() -> None:
+    st.markdown('<span class="xb-split-marker"></span>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="xb-review-hero">
+            <div>
+                <h2>批量生成 AI 记忆卡</h2>
+                <p>覆盖当前 CSV 的全部单词；已有卡片自动跳过，完成一张保存一张。</p>
+            </div>
+            <div class="xb-review-count">可暂停 · 可恢复</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    api_key, models = get_nvidia_settings()
+    if not api_key or not models:
+        st.error("NVIDIA API 尚未配置，无法开始批量生成。")
+        return
+
+    job = st.session_state.ai_batch_job
+    if job is None:
+        unique_count = len(
+            {
+                normalize_answer(word)
+                for word in st.session_state.df["单词"].tolist()
+                if normalize_answer(word)
+            }
+        )
+        estimated_minutes = max(unique_count / 40, 1)
+        st.markdown(
+            f"""
+            <div class="xb-batch-panel">
+                <div class="xb-batch-title">当前词表 · {unique_count} 个唯一单词</div>
+                <div class="xb-batch-note">
+                    点击后会先检查 Supabase 和本地缓存，只生成缺失内容。
+                    按 40 次/分钟估算，全部缺失时理论至少需要
+                    {estimated_minutes:.1f} 分钟，实际时间取决于模型响应速度。
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            "为当前词表生成全部 AI 记忆卡",
+            type="primary",
+            width="stretch",
+            key="start_ai_batch",
+        ):
+            st.session_state.ai_batch_job = start_ai_batch_job()
+            st.rerun()
+        return
+
+    total_target = int(job.get("target_count") or 0)
+    completed = int(job.get("completed") or 0)
+    failed_count = len(job.get("failed") or [])
+    remaining = len(job.get("queue") or [])
+    processed = completed + failed_count
+    progress_value = (
+        min(processed / total_target, 1.0)
+        if total_target
+        else 1.0
+    )
+    st.progress(
+        progress_value,
+        text=f"已处理 {processed} / {total_target} 个待生成单词",
+    )
+    st.markdown(
+        f"""
+        <div class="xb-notebook-stats">
+            <div class="xb-notebook-stat">已生成<strong>{completed}</strong></div>
+            <div class="xb-notebook-stat">已有跳过<strong>{int(job.get('skipped') or 0)}</strong></div>
+            <div class="xb-notebook-stat">失败<strong>{failed_count}</strong></div>
+            <div class="xb-notebook-stat">剩余<strong>{remaining}</strong></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if job.get("current_word"):
+        st.markdown(
+            f'<div class="xb-batch-current">正在处理：'
+            f'{html.escape(str(job["current_word"]))}</div>',
+            unsafe_allow_html=True,
+        )
+    if job.get("message"):
+        if job.get("status") == "completed":
+            st.success(str(job["message"]))
+        else:
+            st.warning(str(job["message"]))
+
+    control_columns = st.columns(3, gap="small")
+    with control_columns[0]:
+        if job.get("status") == "running":
+            if st.button("暂停", width="stretch", key="pause_ai_batch"):
+                job["status"] = "paused"
+                job["message"] = "任务已暂停，可随时继续。"
+                st.rerun()
+        elif job.get("status") == "paused" and remaining:
+            if st.button(
+                "继续生成",
+                type="primary",
+                width="stretch",
+                key="resume_ai_batch",
+            ):
+                job["status"] = "running"
+                job["message"] = ""
+                job["consecutive_failures"] = 0
+                st.rerun()
+    with control_columns[1]:
+        if failed_count and job.get("status") != "running":
+            if st.button(
+                "仅重试失败项",
+                width="stretch",
+                key="retry_failed_ai_batch",
+            ):
+                job["queue"] = [
+                    {
+                        "word": item["word"],
+                        "normalized_word": item["normalized_word"],
+                        "meaning": item["meaning"],
+                    }
+                    for item in job["failed"]
+                ]
+                job["failed"] = []
+                job["status"] = "running"
+                job["message"] = ""
+                job["consecutive_failures"] = 0
+                st.rerun()
+    with control_columns[2]:
+        if st.button(
+            "重新扫描",
+            width="stretch",
+            key="reset_ai_batch",
+            help="重新检查云端和本地缓存，并只保留仍然缺失的单词。",
+        ):
+            st.session_state.ai_batch_job = None
+            st.rerun()
+
+    if job.get("sync_warnings"):
+        st.warning(
+            f"{len(job['sync_warnings'])} 张卡片已生成到本地，"
+            "但云端同步暂时失败。可点击“仅重试失败项”；"
+            "重试会读取本地缓存，不会重复调用模型生成。"
+        )
+    if failed_count:
+        with st.expander(f"查看失败记录（{failed_count}）"):
+            for item in job["failed"][-30:]:
+                st.write(f"**{item['word']}**：{item['error']}")
+
+    if job.get("status") == "running" and remaining:
+        with st.spinner(
+            f"正在生成 {job['queue'][0]['word']}，完成后将自动继续…"
+        ):
+            process_next_ai_batch_item(job)
+        st.rerun()
+
+
 def render_completion_page() -> None:
     if not st.session_state.balloons_shown:
         st.balloons()
@@ -3526,7 +3870,7 @@ def render_sidebar() -> None:
         )
         st.radio(
             "功能",
-            ("拼写训练", "复习浏览", "已学词本"),
+            ("拼写训练", "复习浏览", "已学词本", "批量 AI"),
             key="app_view",
             horizontal=True,
             label_visibility="collapsed",
@@ -3815,6 +4159,9 @@ def main() -> None:
         return
     if st.session_state.app_view == "已学词本":
         render_learned_notebook()
+        return
+    if st.session_state.app_view == "批量 AI":
+        render_ai_batch_center()
         return
 
     render_progress()
