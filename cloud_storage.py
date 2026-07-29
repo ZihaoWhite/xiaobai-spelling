@@ -17,6 +17,8 @@ import pandas as pd
 
 WORD_LISTS_TABLE = "xb_word_lists"
 AI_CARDS_TABLE = "xb_ai_cards"
+DAILY_WORDS_TABLE = "xb_daily_words"
+LEARNED_WORDS_VIEW = "xb_learned_words"
 CLOUD_REF_PREFIX = "cloud://"
 HTTPS_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
@@ -91,6 +93,65 @@ def dataframe_from_payload(payload: Any) -> pd.DataFrame:
         return pd.DataFrame(data=data, columns=columns, index=index)
     except (TypeError, ValueError) as exc:
         raise CloudStorageError("无法还原云端词表。") from exc
+
+
+def learning_rows_from_dataframe(
+    dataframe: pd.DataFrame,
+    *,
+    word_list_id: str,
+    source_name: str,
+    source_date: str | None,
+) -> list[dict[str, Any]]:
+    """Build idempotent per-list learning rows, merging duplicate words."""
+    effective_date = (
+        str(source_date or "").strip()
+        or datetime.now(timezone.utc).date().isoformat()
+    )
+    merged: dict[str, dict[str, Any]] = {}
+    for _, item in dataframe.iterrows():
+        word = str(item.get("单词", "")).strip()
+        normalized = word.casefold()
+        if not normalized:
+            continue
+        try:
+            attempts = max(int(item.get("当天答题次数", 0) or 0), 0)
+            correct = max(int(item.get("当天正确", 0) or 0), 0)
+            wrong = max(int(item.get("当天错误", 0) or 0), 0)
+            current_status = int(item.get("当前状态", 0) or 0)
+        except (TypeError, ValueError):
+            attempts = correct = wrong = current_status = 0
+        if attempts <= 0:
+            continue
+        existing = merged.get(normalized)
+        if existing is None:
+            merged[normalized] = {
+                "word_list_id": str(word_list_id),
+                "source_name": str(source_name).strip() or "云端词表.csv",
+                "source_date": effective_date,
+                "normalized_word": normalized,
+                "word": word,
+                "chinese_meaning": str(item.get("中文释义", "")).strip(),
+                "learning_type": str(item.get("类型", "")).strip(),
+                "current_status": current_status,
+                "attempts": attempts,
+                "correct": correct,
+                "wrong": wrong,
+            }
+            continue
+        existing["attempts"] += attempts
+        existing["correct"] += correct
+        existing["wrong"] += wrong
+        existing["current_status"] = max(
+            int(existing["current_status"]),
+            current_status,
+        )
+        if not existing["chinese_meaning"]:
+            existing["chinese_meaning"] = str(
+                item.get("中文释义", "")
+            ).strip()
+        if not existing["learning_type"]:
+            existing["learning_type"] = str(item.get("类型", "")).strip()
+    return list(merged.values())
 
 
 def _parse_timestamp(value: Any) -> float:
@@ -336,3 +397,74 @@ class SupabaseStorage:
             },
             prefer="resolution=merge-duplicates,return=minimal",
         )
+
+    def sync_learning_snapshot(
+        self,
+        *,
+        word_list_id: str,
+        source_name: str,
+        source_date: str | None,
+        dataframe: pd.DataFrame,
+    ) -> int:
+        """Atomically replace learned rows for one uploaded CSV snapshot."""
+        rows = learning_rows_from_dataframe(
+            dataframe,
+            word_list_id=word_list_id,
+            source_name=source_name,
+            source_date=source_date,
+        )
+        result = self._request(
+            "POST",
+            "rpc/xb_sync_daily_words",
+            body={
+                "p_word_list_id": str(word_list_id),
+                "p_source_name": str(source_name).strip() or "云端词表.csv",
+                "p_source_date": (
+                    str(source_date or "").strip()
+                    or datetime.now(timezone.utc).date().isoformat()
+                ),
+                "p_rows": rows,
+            },
+        )
+        try:
+            return int(result or 0)
+        except (TypeError, ValueError) as exc:
+            raise CloudStorageError("云端未返回有效的学习记录数量。") from exc
+
+    def upsert_learning_row(
+        self,
+        *,
+        word_list_id: str,
+        source_name: str,
+        source_date: str | None,
+        row: pd.Series,
+    ) -> None:
+        rows = learning_rows_from_dataframe(
+            pd.DataFrame([row]),
+            word_list_id=word_list_id,
+            source_name=source_name,
+            source_date=source_date,
+        )
+        if not rows:
+            return
+        rows[0]["updated_at"] = datetime.now(timezone.utc).isoformat()
+        self._request(
+            "POST",
+            DAILY_WORDS_TABLE,
+            query={"on_conflict": "word_list_id,normalized_word"},
+            body=rows[0],
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+
+    def list_learned_words(self) -> list[dict[str, Any]]:
+        rows = self._request(
+            "GET",
+            LEARNED_WORDS_VIEW,
+            query={
+                "select": "*",
+                "order": "last_seen.desc,normalized_word.asc",
+            },
+        )
+        if not isinstance(rows, list):
+            raise CloudStorageError("无法读取已学单词本。")
+        return [row for row in rows if isinstance(row, dict)]

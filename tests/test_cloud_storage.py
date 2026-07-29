@@ -13,6 +13,7 @@ from cloud_storage import (
     dataframe_from_payload,
     dataframe_to_payload,
     is_cloud_ref,
+    learning_rows_from_dataframe,
 )
 
 
@@ -103,3 +104,107 @@ def test_http_auth_error_is_user_friendly() -> None:
     )
     with pytest.raises(Exception, match="密钥无效"):
         storage.list_word_lists()
+
+
+def test_learning_rows_merge_duplicates_and_skip_unpracticed() -> None:
+    frame = pd.DataFrame(
+        [
+            {
+                "单词": "Apple",
+                "中文释义": "苹果",
+                "类型": "新学",
+                "当前状态": 1,
+                "当天答题次数": 2,
+                "当天正确": 1,
+                "当天错误": 1,
+            },
+            {
+                "单词": "apple",
+                "中文释义": "",
+                "类型": "",
+                "当前状态": 2,
+                "当天答题次数": 1,
+                "当天正确": 1,
+                "当天错误": 0,
+            },
+            {
+                "单词": "banana",
+                "中文释义": "香蕉",
+                "类型": "新学",
+                "当前状态": 0,
+                "当天答题次数": 0,
+                "当天正确": 0,
+                "当天错误": 0,
+            },
+        ]
+    )
+    rows = learning_rows_from_dataframe(
+        frame,
+        word_list_id="list-1",
+        source_name="today.csv",
+        source_date="2026-07-29",
+    )
+    assert len(rows) == 1
+    assert rows[0]["normalized_word"] == "apple"
+    assert rows[0]["attempts"] == 3
+    assert rows[0]["correct"] == 2
+    assert rows[0]["wrong"] == 1
+    assert rows[0]["current_status"] == 2
+
+
+def test_sync_learning_snapshot_uses_atomic_rpc() -> None:
+    captured = {}
+
+    def fake_urlopen(request, timeout, context):
+        captured["url"] = request.full_url
+        captured["body"] = json.loads(request.data.decode("utf-8"))
+        return FakeResponse(1)
+
+    storage = SupabaseStorage(
+        SupabaseConfig("https://example.supabase.co", "server-secret"),
+        urlopen_fn=fake_urlopen,
+    )
+    count = storage.sync_learning_snapshot(
+        word_list_id="list-1",
+        source_name="today.csv",
+        source_date="2026-07-29",
+        dataframe=pd.DataFrame(
+            [
+                {
+                    "单词": "apple",
+                    "中文释义": "苹果",
+                    "类型": "新学",
+                    "当前状态": 1,
+                    "当天答题次数": 1,
+                    "当天正确": 1,
+                    "当天错误": 0,
+                }
+            ]
+        ),
+    )
+    assert count == 1
+    assert "/rest/v1/rpc/xb_sync_daily_words" in captured["url"]
+    assert captured["body"]["p_rows"][0]["normalized_word"] == "apple"
+
+
+def test_list_learned_words_reads_aggregate_view() -> None:
+    def fake_urlopen(request, timeout, context):
+        assert "/rest/v1/xb_learned_words" in request.full_url
+        return FakeResponse(
+            [
+                {
+                    "normalized_word": "apple",
+                    "word": "apple",
+                    "total_attempts": 3,
+                    "has_ai_card": True,
+                }
+            ]
+        )
+
+    storage = SupabaseStorage(
+        SupabaseConfig("https://example.supabase.co", "server-secret"),
+        urlopen_fn=fake_urlopen,
+    )
+    rows = storage.list_learned_words()
+    assert rows[0]["word"] == "apple"
+    assert rows[0]["has_ai_card"] is True

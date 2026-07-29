@@ -702,6 +702,12 @@ def inject_css() -> None:
         }
         [data-testid="stSidebarCollapseButton"] {
             pointer-events: auto !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        [data-testid="stSidebarCollapseButton"] button {
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         [data-testid="stMainBlockContainer"] {
             width: 100%;
@@ -1221,6 +1227,402 @@ def inject_css() -> None:
                 display: none;
             }
         }
+
+        /* Editorial blue theme: quiet, contemporary, and study-focused. */
+        :root {
+            --xb-ink: #172033;
+            --xb-muted: #697386;
+            --xb-faint: #9aa3b4;
+            --xb-line: #e2e5ec;
+            --xb-brand: #5969d8;
+            --xb-brand-dark: #4453bf;
+            --xb-green: #2f9b78;
+            --xb-red: #d45f68;
+            --xb-canvas: #f5f5f2;
+            --xb-warm: #fffefa;
+            --xb-coral: #e9866f;
+        }
+        .stApp {
+            background:
+                radial-gradient(circle at 15% 0%, rgba(203, 211, 255, .32), transparent 29rem),
+                radial-gradient(circle at 94% 8%, rgba(248, 218, 191, .28), transparent 25rem),
+                linear-gradient(180deg, #fafaf8 0%, #f4f4f1 100%);
+        }
+        [data-testid="stSidebar"] {
+            background: rgba(250, 250, 248, .97);
+            border-right: 1px solid #e5e6eb;
+        }
+        [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+            gap: .72rem;
+        }
+        .xb-side-brand {
+            margin: .35rem 0 .1rem;
+            padding-bottom: 1rem;
+            border-bottom-color: #e7e8ed;
+        }
+        .xb-side-mark,
+        .xb-logo {
+            background:
+                radial-gradient(circle at 74% 22%, rgba(255, 255, 255, .4), transparent 24%),
+                linear-gradient(145deg, #6878e5, #4654bd);
+            box-shadow: 0 10px 24px rgba(70, 84, 189, .2);
+        }
+        .xb-logo::after {
+            background: #f2a36f;
+        }
+        .xb-side-brand strong,
+        .xb-brand h1 {
+            color: var(--xb-ink);
+        }
+        .xb-side-intro {
+            display: grid;
+            gap: .18rem;
+            margin: .15rem 0 .2rem;
+            padding: .72rem .8rem;
+            border-radius: 13px;
+            color: #536078;
+            background: #f0f1f7;
+        }
+        .xb-side-intro span {
+            color: #7a8395;
+            font-size: .68rem;
+            font-weight: 730;
+            letter-spacing: .08em;
+        }
+        .xb-side-intro strong {
+            color: #323c52;
+            font-size: .78rem;
+            font-weight: 650;
+        }
+        .xb-side-section {
+            margin: .72rem 0 .05rem;
+            color: #7c8596;
+            font-size: .68rem;
+            letter-spacing: .09em;
+        }
+        [data-testid="stSidebar"] label {
+            color: #303a4d;
+        }
+        [data-testid="stSidebar"] [data-baseweb="select"] > div {
+            min-height: 50px;
+            border-color: #dfe2e9;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+        [data-testid="stSidebar"] [data-testid="stRadio"] > div {
+            gap: .34rem;
+        }
+        [data-testid="stSidebar"] [data-testid="stRadio"] label {
+            padding: .2rem 0;
+        }
+        [data-testid="stSidebar"] [data-testid="stExpander"] {
+            border: 1px solid #e1e4eb;
+            border-radius: 13px;
+            background: rgba(255, 255, 255, .68);
+            overflow: hidden;
+        }
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary {
+            min-height: 46px;
+            color: #3f4960;
+            font-size: .8rem;
+            font-weight: 650;
+        }
+        .xb-file-meta {
+            color: #586277;
+            background: rgba(255, 255, 255, .82);
+            border-color: #e0e3ea;
+            box-shadow: 0 6px 20px rgba(34, 42, 65, .035);
+        }
+        .xb-ai-status {
+            color: #566075;
+            background: rgba(255, 255, 255, .76);
+            border-color: #e0e3ea;
+        }
+        .xb-ai-status-dot {
+            background: #6878df;
+            box-shadow: 0 0 0 4px rgba(104, 120, 223, .11);
+        }
+        .xb-save-ok {
+            color: #288263;
+        }
+        [data-testid="stExpandSidebarButton"] {
+            color: #2f3950;
+            border-color: rgba(62, 72, 98, .1);
+        }
+        [data-testid="stExpandSidebarButton"]:hover {
+            color: var(--xb-brand-dark);
+            border-color: rgba(89, 105, 216, .24);
+        }
+        .xb-keyboard-ready {
+            color: #5f687a;
+            border-color: #e0e3ea;
+        }
+        .xb-keyboard-dot {
+            background: #6878df;
+            box-shadow: 0 0 0 4px rgba(104, 120, 223, .11);
+        }
+        .xb-session-rail {
+            background: rgba(255, 255, 255, .72);
+            border-color: #e2e4ea;
+            box-shadow: 0 12px 36px rgba(37, 45, 68, .055);
+        }
+        .xb-session-track {
+            background: #e6e8f1;
+        }
+        .xb-session-track span {
+            background: linear-gradient(90deg, #5363cf, #8490eb);
+            box-shadow: 0 0 14px rgba(89, 105, 216, .16);
+        }
+        .xb-metric {
+            background: #f2f3f7;
+        }
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            background:
+                radial-gradient(circle at 88% 1%, rgba(245, 209, 181, .22), transparent 20rem),
+                #fffefa;
+            border-color: #e2e3e7;
+            box-shadow:
+                0 24px 70px rgba(40, 46, 67, .09),
+                0 2px 8px rgba(40, 46, 67, .035);
+        }
+        .xb-pill {
+            color: #4655bd;
+            background: #eceeff;
+            border-color: rgba(89, 105, 216, .08);
+        }
+        .xb-pill-neutral {
+            color: #976044;
+            background: #fff0e5;
+        }
+        .xb-prompt-zone {
+            border-color: #e3e4ea;
+            background: linear-gradient(145deg, #f3f4fb, #fbf8f3);
+        }
+        .xb-prompt-zone::before {
+            color: rgba(71, 84, 163, .07);
+        }
+        .xb-word {
+            color: #1d2942;
+        }
+        .xb-word-long {
+            font-size: clamp(2.65rem, 6.1vw, 3.9rem);
+        }
+        .xb-word-xlong {
+            font-size: clamp(2.2rem, 5.2vw, 3.3rem);
+            letter-spacing: -.075em;
+        }
+        .xb-hint,
+        .xb-meaning {
+            color: #435069;
+        }
+        .xb-pos {
+            color: #4d5cc5;
+        }
+        .xb-input-guide kbd {
+            color: #4d5cc5;
+            background: #f1f2ff;
+            border-color: #cdd2ef;
+        }
+        [data-testid="stTextInput"] input {
+            color: #202b42;
+            caret-color: var(--xb-brand);
+            border-color: #d7dae3;
+        }
+        [data-testid="stTextInput"] input:focus {
+            border-color: var(--xb-brand);
+            box-shadow:
+                0 0 0 4px rgba(89, 105, 216, .12),
+                0 8px 22px rgba(89, 105, 216, .055);
+        }
+        [data-testid="InputInstructions"] {
+            display: none !important;
+        }
+        [data-testid="stFormSubmitButton"] button,
+        div[data-testid="stButton"] button[kind="primary"] {
+            background: linear-gradient(135deg, #6676df, #4a59c3);
+            box-shadow: 0 10px 22px rgba(74, 89, 195, .18);
+        }
+        [data-testid="stFormSubmitButton"] button:hover,
+        div[data-testid="stButton"] button[kind="primary"]:hover {
+            background: linear-gradient(135deg, #5868d2, #3f4daf);
+            box-shadow: 0 12px 24px rgba(74, 89, 195, .24);
+        }
+        .xb-ai-shell {
+            border-color: #e1e3e9;
+            background:
+                radial-gradient(circle at 92% 0%, rgba(245, 205, 175, .2), transparent 14rem),
+                rgba(255, 254, 250, .9);
+            box-shadow: 0 10px 34px rgba(40, 46, 67, .05);
+        }
+        .xb-ai-spark {
+            color: #4d5cc5;
+            background: #eceeff;
+        }
+        .xb-ai-item {
+            border-color: #e3e5eb;
+        }
+        .xb-family span {
+            color: #4d5cc5;
+            background: #eef0ff;
+        }
+        @media (max-width: 720px) {
+            .xb-word-long {
+                font-size: clamp(1.9rem, 9.2vw, 2.35rem);
+                letter-spacing: -.065em;
+            }
+            .xb-word-xlong {
+                font-size: clamp(1.55rem, 7.6vw, 1.95rem);
+                letter-spacing: -.075em;
+            }
+        }
+        [data-testid="stMainBlockContainer"]:has(.xb-split-marker) {
+            max-width: 1320px;
+        }
+        .xb-split-marker {
+            display: none;
+        }
+        .xb-ai-column-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 38px;
+            margin: 0 0 .42rem;
+            padding: 0 .18rem;
+            color: #717b8e;
+            font-size: .72rem;
+            font-weight: 720;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+        .xb-ai-column-label span {
+            color: #4f5fc9;
+            font-size: .68rem;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+        .xb-review-hero {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            margin: .15rem 0 1.1rem;
+        }
+        .xb-review-hero h2 {
+            margin: 0 0 .28rem;
+            color: var(--xb-ink);
+            font-size: 1.55rem;
+            letter-spacing: -.035em;
+        }
+        .xb-review-hero p {
+            margin: 0;
+            color: var(--xb-muted);
+            font-size: .82rem;
+        }
+        .xb-review-count {
+            flex: 0 0 auto;
+            padding: .42rem .68rem;
+            border-radius: 999px;
+            color: #5360bd;
+            background: #eef0ff;
+            font-size: .74rem;
+            font-weight: 680;
+        }
+        .xb-notebook-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .65rem;
+            margin: -.35rem 0 1rem;
+        }
+        .xb-notebook-stat {
+            padding: .72rem .8rem;
+            border: 1px solid #e2e4ea;
+            border-radius: 14px;
+            color: #7a8394;
+            background: rgba(255, 255, 255, .72);
+            font-size: .7rem;
+        }
+        .xb-notebook-stat strong {
+            display: block;
+            margin-top: .14rem;
+            color: #303a50;
+            font-size: 1rem;
+        }
+        .xb-review-word-card {
+            min-height: 235px;
+            padding: 1.35rem 1.3rem;
+            border: 1px solid #e1e3e9;
+            border-radius: 22px;
+            background:
+                radial-gradient(circle at 88% 5%, rgba(247, 213, 188, .25), transparent 13rem),
+                #fffefa;
+            box-shadow: 0 16px 45px rgba(40, 46, 67, .07);
+        }
+        .xb-review-kicker {
+            color: #7d8798;
+            font-size: .68rem;
+            font-weight: 730;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        .xb-review-word {
+            margin: .55rem 0 .4rem;
+            color: #202b45;
+            font: 750 clamp(2rem, 4.8vw, 3.25rem)/1.15 ui-monospace,
+                SFMono-Regular, Menlo, monospace;
+            letter-spacing: -.055em;
+            overflow-wrap: anywhere;
+        }
+        .xb-review-meaning {
+            min-height: 3.2rem;
+            color: #4d586e;
+            font-size: 1rem;
+            line-height: 1.65;
+        }
+        .xb-review-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .5rem;
+            margin-top: 1rem;
+        }
+        .xb-review-stat {
+            padding: .55rem .62rem;
+            border-radius: 11px;
+            color: #737d8f;
+            background: #f3f4f7;
+            font-size: .68rem;
+        }
+        .xb-review-stat strong {
+            display: block;
+            margin-top: .12rem;
+            color: #303a50;
+            font-size: .9rem;
+        }
+        [data-testid="stMainBlockContainer"]:has(.xb-split-marker)
+        .xb-ai-shell {
+            margin-top: 0;
+        }
+        [data-testid="stMainBlockContainer"]:has(.xb-split-marker)
+        .xb-ai-grid {
+            grid-template-columns: 1fr;
+        }
+        [data-testid="stMainBlockContainer"]:has(.xb-split-marker)
+        .xb-ai-item-wide {
+            grid-column: auto;
+        }
+        @media (max-width: 900px) {
+            [data-testid="stMainBlockContainer"]:has(.xb-split-marker) {
+                max-width: 760px;
+            }
+            .xb-ai-column-label {
+                margin-top: .8rem;
+            }
+            .xb-review-hero {
+                align-items: flex-start;
+            }
+            .xb-notebook-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -1588,6 +1990,11 @@ def initialize_state_defaults() -> None:
         "cloud_error": "",
         "cloud_last_sync": "",
         "pending_selected_file_path": None,
+        "study_layout": "专注单列",
+        "app_view": "拼写训练",
+        "pending_review_row": None,
+        "learned_words_cache": None,
+        "learned_words_error": "",
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -1808,18 +2215,33 @@ def handle_upload() -> None:
         if storage is not None:
             raw_df, encoding = read_csv_safely(target)
             prepared_df = validate_and_prepare_dataframe(raw_df)
+            source_date = parse_date_from_filename(target.name)
             row = storage.upsert_word_list(
                 source_name=target.name,
                 dataframe=prepared_df,
                 encoding=encoding,
-                source_date=parse_date_from_filename(target.name),
+                source_date=source_date,
             )
+            learned_note = ""
+            try:
+                learned_count = storage.sync_learning_snapshot(
+                    word_list_id=str(row["id"]),
+                    source_name=target.name,
+                    source_date=source_date,
+                    dataframe=prepared_df,
+                )
+            except CloudStorageError:
+                learned_note = " 已学单词本尚未同步，请先更新云端表结构。"
+            else:
+                st.session_state.learned_words_cache = None
+                learned_note = f" 已更新 {learned_count} 条已学记录。"
             target_ref = cloud_ref(str(row["id"]))
             refresh_file_records()
             initialize_file_session(target_ref)
             st.session_state.selected_file_path = target_ref
             st.session_state.upload_message = (
                 f"{target.name} 已上传云端，可在其他设备继续学习。"
+                f"{learned_note}"
             )
             return
         refresh_file_records()
@@ -1934,6 +2356,26 @@ def process_submission(user_answer: str) -> bool:
         )
         return False
 
+    if cloud_mode and cloud_storage is not None:
+        record = current_file_record() or {}
+        try:
+            cloud_storage.upsert_learning_row(
+                word_list_id=cloud_id_from_ref(source_ref),
+                source_name=str(
+                    record.get("name")
+                    or st.session_state.cloud_source_name
+                    or "云端词表.csv"
+                ),
+                source_date=str(record.get("date") or "") or None,
+                row=df.loc[row_index],
+            )
+        except CloudStorageError:
+            st.session_state.backup_warning = (
+                "本题已保存，但已学单词本暂未更新；请确认云端表结构已升级。"
+            )
+        else:
+            st.session_state.learned_words_cache = None
+
     if not cloud_mode and source_path is not None:
         st.session_state.source_signature = file_signature(source_path)
     st.session_state.file_missing = False
@@ -2007,8 +2449,18 @@ def render_input_autofocus(question_key: str) -> None:
 
 
 def render_header() -> None:
+    if st.session_state.app_view == "复习浏览":
+        layout_status = "复习模式 · 单词与记忆卡联动"
+    elif st.session_state.app_view == "已学词本":
+        layout_status = "长期词本 · 跨日期累计复习"
+    else:
+        layout_status = (
+            "双栏学习 · 拼写与记忆并行"
+            if st.session_state.study_layout == "学习双栏"
+            else "专注模式 · 回车自动下一词"
+        )
     st.markdown(
-        """
+        f"""
         <div class="xb-brand">
             <div class="xb-brand-row">
                 <div class="xb-brand-identity">
@@ -2020,7 +2472,7 @@ def render_header() -> None:
                 </div>
                 <div class="xb-keyboard-ready">
                     <span class="xb-keyboard-dot"></span>
-                    专注模式 · 回车自动下一词
+                    {layout_status}
                 </div>
             </div>
         </div>
@@ -2152,7 +2604,6 @@ def get_nvidia_settings() -> tuple[str, tuple[str, ...]]:
 def render_learning_bundle(bundle: dict[str, Any]) -> None:
     dictionary = bundle.get("dictionary") or {}
     ai_card = bundle.get("ai") or {}
-    safe_model = html.escape(str(bundle.get("model") or "NVIDIA NIM"))
     safe_example_en = html.escape(str(ai_card.get("example_en") or ""))
     safe_example_zh = html.escape(str(ai_card.get("example_zh") or ""))
     safe_usage = html.escape(str(ai_card.get("usage_note") or ""))
@@ -2219,7 +2670,7 @@ def render_learning_bundle(bundle: dict[str, Any]) -> None:
                         词典事实与 AI 联想分开显示 · 已保存到安全缓存
                     </div>
                 </div>
-                <div class="xb-ai-model" title="{safe_model}">{safe_model}</div>
+                <div class="xb-ai-model">AI 已缓存</div>
             </div>
             <div class="xb-ai-grid">
                 <div class="xb-ai-item xb-ai-item-wide">
@@ -2252,6 +2703,8 @@ def render_learning_assistant(
     word: str,
     chinese_meaning: str,
     question_key: str,
+    *,
+    split_view: bool = False,
 ) -> None:
     normalized_word = normalize_answer(word)
     cards = st.session_state.learning_cards
@@ -2277,10 +2730,25 @@ def render_learning_assistant(
     bundle = cards.get(normalized_word)
     api_key, models = get_nvidia_settings()
 
-    with st.expander(
-        "✦ AI 记忆助手 · 例句 / 拼写 / 联想",
-        expanded=bundle is not None,
-    ):
+    panel = (
+        st.container()
+        if split_view
+        else st.expander(
+            "✦ AI 记忆助手 · 例句 / 拼写 / 联想",
+            expanded=bundle is not None,
+        )
+    )
+    with panel:
+        if split_view:
+            st.markdown(
+                """
+                <div class="xb-ai-column-label">
+                    AI 记忆助手
+                    <span>例句 · 拼写 · 联想</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
         if bundle is not None:
             render_learning_bundle(bundle)
         else:
@@ -2338,61 +2806,37 @@ def render_learning_assistant(
             st.error(errors[normalized_word])
 
 
-def render_question_card() -> None:
-    order = st.session_state.question_order
-    position = st.session_state.current_position
-    if not order or position >= len(order):
-        st.session_state.finished = True
-        st.rerun()
-    row_index = order[position]
-    row = st.session_state.df.loc[row_index]
-    word = str(row["单词"])
-    learning_type = str(row["类型"]) or "未分类"
-    pos, cleaned_meaning = extract_part_of_speech(str(row["中文释义"]))
-    display_meaning = cleaned_meaning if pos else str(row["中文释义"])
-    if not display_meaning:
-        display_meaning = "暂无释义"
-    mode = st.session_state.practice_mode
-    mode_letter = mode.split("·", maxsplit=1)[0].strip()
-
-    safe_type = html.escape(learning_type)
-    safe_meaning = html.escape(display_meaning)
-    safe_pos = html.escape(pos)
-    safe_word = html.escape(word)
-    if mode.startswith("模式 A"):
-        focal_html = f'<div class="xb-word">{safe_word}</div>'
-    elif mode.startswith("模式 B"):
-        focal_html = (
-            f'<div class="xb-hint">{html.escape(build_word_hint(word))}</div>'
-        )
-    else:
-        focal_html = '<div class="xb-hidden-word">听发音 · 看释义 · 完整拼写</div>'
-
-    render_recent_feedback()
+def render_spelling_panel(
+    *,
+    word: str,
+    learning_type: str,
+    display_meaning: str,
+    pos: str,
+    mode_letter: str,
+    focal_html: str,
+    question_key: str,
+    position: int,
+) -> None:
     with st.container(border=True):
         st.markdown(
             f"""
             <div class="xb-card-head">
                 <div class="xb-card-labels">
                     <span class="xb-pill">{html.escape(mode_letter)}</span>
-                    <span class="xb-pill xb-pill-neutral">{safe_type}</span>
+                    <span class="xb-pill xb-pill-neutral">{html.escape(learning_type)}</span>
                 </div>
                 <span class="xb-card-number">WORD {position + 1:02d}</span>
             </div>
             <div class="xb-prompt-zone">
                 {focal_html}
-                <div class="xb-meaning">{safe_meaning}</div>
-                {f'<div class="xb-pos">{safe_pos}</div>' if safe_pos else ''}
+                <div class="xb-meaning">{html.escape(display_meaning)}</div>
+                {f'<div class="xb-pos">{html.escape(pos)}</div>' if pos else ''}
             </div>
             <div class="xb-audio-label">美式发音 · 点击可重播</div>
             """,
             unsafe_allow_html=True,
         )
 
-        question_key = (
-            f"{hashlib.sha1(str(st.session_state.loaded_source_path).encode()).hexdigest()[:10]}"
-            f"-{st.session_state.round_id}-{position}-{row_index}"
-        )
         should_autoplay = (
             st.session_state.last_autoplay_question_key != question_key
         )
@@ -2441,7 +2885,475 @@ def render_question_card() -> None:
 
         render_answer_feedback()
 
-    render_learning_assistant(word, display_meaning, question_key)
+
+def render_question_card() -> None:
+    order = st.session_state.question_order
+    position = st.session_state.current_position
+    if not order or position >= len(order):
+        st.session_state.finished = True
+        st.rerun()
+    row_index = order[position]
+    row = st.session_state.df.loc[row_index]
+    word = str(row["单词"])
+    learning_type = str(row["类型"]) or "未分类"
+    pos, cleaned_meaning = extract_part_of_speech(str(row["中文释义"]))
+    display_meaning = cleaned_meaning if pos else str(row["中文释义"])
+    if not display_meaning:
+        display_meaning = "暂无释义"
+    mode = st.session_state.practice_mode
+    mode_letter = mode.split("·", maxsplit=1)[0].strip()
+
+    safe_word = html.escape(word)
+    if mode.startswith("模式 A"):
+        word_length = len(word.strip())
+        size_class = (
+            " xb-word-xlong"
+            if word_length >= 13
+            else " xb-word-long"
+            if word_length >= 9
+            else ""
+        )
+        focal_html = f'<div class="xb-word{size_class}">{safe_word}</div>'
+    elif mode.startswith("模式 B"):
+        focal_html = (
+            f'<div class="xb-hint">{html.escape(build_word_hint(word))}</div>'
+        )
+    else:
+        focal_html = '<div class="xb-hidden-word">听发音 · 看释义 · 完整拼写</div>'
+
+    question_key = (
+        f"{hashlib.sha1(str(st.session_state.loaded_source_path).encode()).hexdigest()[:10]}"
+        f"-{st.session_state.round_id}-{position}-{row_index}"
+    )
+    render_recent_feedback()
+    panel_args = {
+        "word": word,
+        "learning_type": learning_type,
+        "display_meaning": display_meaning,
+        "pos": pos,
+        "mode_letter": mode_letter,
+        "focal_html": focal_html,
+        "question_key": question_key,
+        "position": position,
+    }
+    if st.session_state.study_layout == "学习双栏":
+        st.markdown('<span class="xb-split-marker"></span>', unsafe_allow_html=True)
+        spelling_column, ai_column = st.columns(
+            [1.06, .94],
+            gap="large",
+            vertical_alignment="top",
+        )
+        with spelling_column:
+            render_spelling_panel(**panel_args)
+        with ai_column:
+            render_learning_assistant(
+                word,
+                display_meaning,
+                question_key,
+                split_view=True,
+            )
+    else:
+        render_spelling_panel(**panel_args)
+        render_learning_assistant(word, display_meaning, question_key)
+
+
+def render_review_browser() -> None:
+    df = st.session_state.df
+    st.markdown('<span class="xb-split-marker"></span>', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="xb-review-hero">
+            <div>
+                <h2>单词与记忆卡</h2>
+                <p>按词表浏览、搜索和筛选，把 AI 内容真正用于复习。</p>
+            </div>
+            <div class="xb-review-count">{len(df)} 个单词</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    filter_left, filter_middle, filter_right = st.columns(
+        [1.45, 1, 1],
+        gap="small",
+    )
+    with filter_left:
+        search_query = st.text_input(
+            "搜索",
+            placeholder="搜索英文或中文释义",
+            key="review_search",
+        ).strip()
+    type_options = ["全部类型"] + sorted(
+        {
+            str(value).strip()
+            for value in df["类型"].tolist()
+            if str(value).strip()
+        }
+    )
+    with filter_middle:
+        selected_type = st.selectbox(
+            "单词类型",
+            type_options,
+            key="review_type_filter",
+        )
+    with filter_right:
+        selected_status = st.selectbox(
+            "练习状态",
+            ("全部状态", "需要复习", "尚未练习", "今日已掌握"),
+            key="review_status_filter",
+        )
+
+    filtered = df
+    if search_query:
+        needle = search_query.casefold()
+        mask = (
+            df["单词"].astype(str).str.casefold().str.contains(needle, regex=False)
+            | df["中文释义"]
+            .astype(str)
+            .str.casefold()
+            .str.contains(needle, regex=False)
+        )
+        filtered = filtered.loc[mask]
+    if selected_type != "全部类型":
+        filtered = filtered.loc[filtered["类型"].astype(str) == selected_type]
+    if selected_status == "需要复习":
+        filtered = filtered.loc[filtered["当天错误"] > 0]
+    elif selected_status == "尚未练习":
+        filtered = filtered.loc[filtered["当天答题次数"] == 0]
+    elif selected_status == "今日已掌握":
+        filtered = filtered.loc[
+            (filtered["当天正确"] > 0) & (filtered["当天错误"] == 0)
+        ]
+
+    options = list(filtered.index)
+    if not options:
+        st.info("没有符合当前条件的单词，请调整搜索或筛选条件。")
+        return
+
+    pending_row = st.session_state.get("pending_review_row")
+    if pending_row in options:
+        st.session_state.review_selected_row = pending_row
+    st.session_state.pending_review_row = None
+    if (
+        "review_selected_row" not in st.session_state
+        or st.session_state.review_selected_row not in options
+    ):
+        st.session_state.review_selected_row = options[0]
+
+    def review_option_label(index: Any) -> str:
+        item = df.loc[index]
+        meaning = str(item["中文释义"]).replace("\n", " ").strip()
+        if len(meaning) > 34:
+            meaning = meaning[:34] + "…"
+        return f"{item['单词']}  ·  {meaning}"
+
+    selected_row = st.selectbox(
+        f"浏览结果 · {len(options)} 个",
+        options,
+        format_func=review_option_label,
+        key="review_selected_row",
+    )
+    selected_position = options.index(selected_row)
+    previous_column, position_column, next_column = st.columns(
+        [1, 1.3, 1],
+        gap="small",
+        vertical_alignment="center",
+    )
+    with previous_column:
+        if st.button(
+            "← 上一个",
+            width="stretch",
+            disabled=selected_position == 0,
+            key="review_previous",
+        ):
+            st.session_state.pending_review_row = options[selected_position - 1]
+            st.rerun()
+    with position_column:
+        st.caption(f"第 {selected_position + 1} / {len(options)} 个")
+    with next_column:
+        if st.button(
+            "下一个 →",
+            width="stretch",
+            disabled=selected_position == len(options) - 1,
+            key="review_next",
+        ):
+            st.session_state.pending_review_row = options[selected_position + 1]
+            st.rerun()
+
+    row = df.loc[selected_row]
+    word = str(row["单词"])
+    raw_meaning = str(row["中文释义"])
+    pos, cleaned_meaning = extract_part_of_speech(raw_meaning)
+    meaning = cleaned_meaning if pos else raw_meaning
+    learning_type = str(row["类型"]) or "未分类"
+    total_attempts = int(row["当天答题次数"])
+    correct = int(row["当天正确"])
+    wrong = int(row["当天错误"])
+    detail_column, ai_column = st.columns(
+        [0.82, 1.18],
+        gap="large",
+        vertical_alignment="top",
+    )
+    with detail_column:
+        st.markdown(
+            f"""
+            <div class="xb-review-word-card">
+                <div class="xb-review-kicker">{html.escape(learning_type)}</div>
+                <div class="xb-review-word">{html.escape(word)}</div>
+                <div class="xb-review-meaning">
+                    {html.escape(meaning)}
+                    {f'<br><small>{html.escape(pos)}</small>' if pos else ''}
+                </div>
+                <div class="xb-review-stats">
+                    <div class="xb-review-stat">练习<strong>{total_attempts}</strong></div>
+                    <div class="xb-review-stat">正确<strong>{correct}</strong></div>
+                    <div class="xb-review-stat">错误<strong>{wrong}</strong></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        try:
+            st.audio(build_audio_url(word), format="audio/mpeg", autoplay=False)
+        except Exception:
+            st.caption("发音暂时不可用。")
+    with ai_column:
+        review_key = (
+            f"review-{hashlib.sha1(str(st.session_state.loaded_source_path).encode()).hexdigest()[:10]}"
+            f"-{selected_row}-{normalize_answer(word)}"
+        )
+        render_learning_assistant(
+            word,
+            meaning,
+            review_key,
+            split_view=True,
+        )
+
+
+def rebuild_learned_notebook(storage: SupabaseStorage) -> tuple[int, int]:
+    """Backfill learned records from every existing cloud word-list snapshot."""
+    synced_lists = 0
+    synced_rows = 0
+    for record in storage.list_word_lists():
+        record_id = str(record.get("cloud_id") or "")
+        if not record_id:
+            continue
+        loaded = storage.load_word_list(record_id)
+        synced_rows += storage.sync_learning_snapshot(
+            word_list_id=record_id,
+            source_name=str(loaded.get("source_name") or record["name"]),
+            source_date=str(record.get("date") or "") or None,
+            dataframe=loaded["dataframe"],
+        )
+        synced_lists += 1
+    return synced_lists, synced_rows
+
+
+def render_learned_notebook() -> None:
+    st.markdown('<span class="xb-split-marker"></span>', unsafe_allow_html=True)
+    storage = get_supabase_storage()
+    if storage is None:
+        st.info("已学单词本需要连接 Supabase 后使用。")
+        return
+
+    st.markdown(
+        """
+        <div class="xb-review-hero">
+            <div>
+                <h2>已学单词本</h2>
+                <p>跨日期去重汇总练习记录，并把每个单词与 AI 学习档案放在一起。</p>
+            </div>
+            <div class="xb-review-count">长期积累</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    action_left, action_right = st.columns([1, 1], gap="small")
+    with action_left:
+        if st.button(
+            "刷新已学词本",
+            width="stretch",
+            key="refresh_learned_notebook",
+        ):
+            st.session_state.learned_words_cache = None
+            st.session_state.learned_words_error = ""
+            st.rerun()
+    with action_right:
+        rebuild_clicked = st.button(
+            "从历史云端词表重建",
+            width="stretch",
+            key="rebuild_learned_notebook",
+            help="首次升级后运行一次；同一词表重复执行不会重复累计。",
+        )
+    if rebuild_clicked:
+        with st.spinner("正在读取历史词表并重建已学单词本…"):
+            try:
+                list_count, row_count = rebuild_learned_notebook(storage)
+            except CloudStorageError as exc:
+                st.session_state.learned_words_error = str(exc)
+            else:
+                st.session_state.learned_words_cache = None
+                st.session_state.learned_words_error = ""
+                st.success(
+                    f"已从 {list_count} 份词表同步 {row_count} 条每日学习记录。"
+                )
+
+    if st.session_state.learned_words_cache is None:
+        try:
+            st.session_state.learned_words_cache = storage.list_learned_words()
+        except CloudStorageError as exc:
+            st.session_state.learned_words_error = str(exc)
+    if st.session_state.learned_words_error:
+        st.error(st.session_state.learned_words_error)
+        st.info(
+            "请先在 Supabase SQL Editor 中重新运行 "
+            "docs/supabase_schema.sql，再点击“从历史云端词表重建”。"
+        )
+        return
+
+    records = list(st.session_state.learned_words_cache or [])
+    if not records:
+        st.info(
+            "已学单词本目前为空。升级云端表结构后点击“从历史云端词表重建”，"
+            "或上传一份包含学习记录的新 CSV。"
+        )
+        return
+
+    total_attempts = sum(int(row.get("total_attempts") or 0) for row in records)
+    total_correct = sum(int(row.get("total_correct") or 0) for row in records)
+    ai_count = sum(bool(row.get("has_ai_card")) for row in records)
+    total_accuracy = total_correct / total_attempts if total_attempts else 0.0
+    st.markdown(
+        f"""
+        <div class="xb-notebook-stats">
+            <div class="xb-notebook-stat">已学单词<strong>{len(records)}</strong></div>
+            <div class="xb-notebook-stat">累计练习<strong>{total_attempts}</strong></div>
+            <div class="xb-notebook-stat">整体正确率<strong>{total_accuracy:.0%}</strong></div>
+            <div class="xb-notebook-stat">已有 AI 卡<strong>{ai_count}</strong></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    filter_search, filter_type, filter_ai = st.columns(
+        [1.45, 1, 1],
+        gap="small",
+    )
+    with filter_search:
+        query = st.text_input(
+            "搜索已学单词",
+            placeholder="搜索英文或中文释义",
+            key="learned_search",
+        ).strip().casefold()
+    type_options = ["全部类型"] + sorted(
+        {
+            str(row.get("learning_type") or "").strip()
+            for row in records
+            if str(row.get("learning_type") or "").strip()
+        }
+    )
+    with filter_type:
+        selected_type = st.selectbox(
+            "类型",
+            type_options,
+            key="learned_type_filter",
+        )
+    with filter_ai:
+        selected_ai = st.selectbox(
+            "AI 档案",
+            ("全部", "已有 AI 卡", "等待生成"),
+            key="learned_ai_filter",
+        )
+
+    filtered: list[dict[str, Any]] = []
+    for row in records:
+        if query and query not in (
+            f"{row.get('word', '')} {row.get('chinese_meaning', '')}".casefold()
+        ):
+            continue
+        if (
+            selected_type != "全部类型"
+            and str(row.get("learning_type") or "") != selected_type
+        ):
+            continue
+        has_ai = bool(row.get("has_ai_card"))
+        if selected_ai == "已有 AI 卡" and not has_ai:
+            continue
+        if selected_ai == "等待生成" and has_ai:
+            continue
+        filtered.append(row)
+    if not filtered:
+        st.info("没有符合当前条件的已学单词。")
+        return
+
+    normalized_options = [str(row["normalized_word"]) for row in filtered]
+    record_map = {
+        str(row["normalized_word"]): row
+        for row in filtered
+    }
+    if (
+        "learned_selected_word" not in st.session_state
+        or st.session_state.learned_selected_word not in normalized_options
+    ):
+        st.session_state.learned_selected_word = normalized_options[0]
+    selected_word_key = st.selectbox(
+        f"选择已学单词 · {len(filtered)} 个",
+        normalized_options,
+        format_func=lambda key: (
+            f"{record_map[key].get('word', key)} · "
+            f"{record_map[key].get('chinese_meaning', '')}"
+        ),
+        key="learned_selected_word",
+    )
+    selected = record_map[selected_word_key]
+    word = str(selected.get("word") or selected_word_key)
+    meaning = str(selected.get("chinese_meaning") or "暂无释义")
+    attempts = int(selected.get("total_attempts") or 0)
+    correct = int(selected.get("total_correct") or 0)
+    wrong = int(selected.get("total_wrong") or 0)
+    accuracy = float(selected.get("accuracy") or 0)
+    first_seen = str(selected.get("first_seen") or "未知")
+    last_seen = str(selected.get("last_seen") or "未知")
+    study_days = int(selected.get("study_days") or 0)
+
+    detail_column, ai_column = st.columns(
+        [0.82, 1.18],
+        gap="large",
+        vertical_alignment="top",
+    )
+    with detail_column:
+        st.markdown(
+            f"""
+            <div class="xb-review-word-card">
+                <div class="xb-review-kicker">
+                    {html.escape(str(selected.get('learning_type') or '已学'))}
+                </div>
+                <div class="xb-review-word">{html.escape(word)}</div>
+                <div class="xb-review-meaning">{html.escape(meaning)}</div>
+                <div class="xb-review-stats">
+                    <div class="xb-review-stat">累计练习<strong>{attempts}</strong></div>
+                    <div class="xb-review-stat">正确率<strong>{accuracy:.0%}</strong></div>
+                    <div class="xb-review-stat">学习天数<strong>{study_days}</strong></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption(
+            f"首次学习 {first_seen} · 最近复习 {last_seen} · "
+            f"正确 {correct} / 错误 {wrong}"
+        )
+        try:
+            st.audio(build_audio_url(word), format="audio/mpeg", autoplay=False)
+        except Exception:
+            st.caption("发音暂时不可用。")
+    with ai_column:
+        render_learning_assistant(
+            word,
+            meaning,
+            f"learned-{selected_word_key}",
+            split_view=True,
+        )
 
 
 def render_completion_page() -> None:
@@ -2553,8 +3465,12 @@ def render_file_error() -> None:
     st.info("请重新从背词软件导出，或修正 CSV 后点击左侧“从磁盘重新加载”。")
 
 
-def render_sidebar_upload() -> None:
-    st.markdown('<div class="xb-side-section">数据管理</div>', unsafe_allow_html=True)
+def render_sidebar_upload(*, show_heading: bool = True) -> None:
+    if show_heading:
+        st.markdown(
+            '<div class="xb-side-section">数据管理</div>',
+            unsafe_allow_html=True,
+        )
     st.file_uploader(
         "上传 CSV",
         type=["csv"],
@@ -2585,10 +3501,22 @@ def render_sidebar() -> None:
             """,
             unsafe_allow_html=True,
         )
-        st.markdown('<div class="xb-side-section">今日词表</div>', unsafe_allow_html=True)
-
-        if st.button("刷新文件列表", width="stretch"):
-            refresh_file_records()
+        st.markdown(
+            """
+            <div class="xb-side-intro">
+                <span>今日学习</span>
+                <strong>选择词表，开始一次专注练习</strong>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.radio(
+            "功能",
+            ("拼写训练", "复习浏览", "已学词本"),
+            key="app_view",
+            horizontal=True,
+            label_visibility="collapsed",
+        )
 
         records = st.session_state.file_records or []
         if records:
@@ -2610,7 +3538,7 @@ def render_sidebar() -> None:
                     current if current in options else options[0]
                 )
             selected = st.selectbox(
-                "选择 CSV",
+                "当前词表",
                 options=options,
                 format_func=lambda path: build_file_label(record_map[path], records),
                 key="selected_file_path",
@@ -2667,7 +3595,26 @@ def render_sidebar() -> None:
             if st.session_state.file_missing:
                 st.warning("当前文件已被移除；内存数据仍可下载。")
 
-        st.markdown('<div class="xb-side-section">云端同步</div>', unsafe_allow_html=True)
+        if st.session_state.app_view == "拼写训练":
+            st.markdown(
+                '<div class="xb-side-section">练习方式</div>',
+                unsafe_allow_html=True,
+            )
+            st.radio(
+                "选择模式",
+                PRACTICE_MODES,
+                key="practice_mode",
+                label_visibility="collapsed",
+            )
+            st.radio(
+                "页面布局",
+                ("专注单列", "学习双栏"),
+                key="study_layout",
+                horizontal=True,
+                help="宽屏可让拼写区与 AI 记忆卡并排；手机会自动上下排列。",
+            )
+
+        st.markdown('<div class="xb-side-section">服务状态</div>', unsafe_allow_html=True)
         cloud_storage = get_supabase_storage()
         if cloud_storage is None:
             st.markdown(
@@ -2698,52 +3645,13 @@ def render_sidebar() -> None:
                 unsafe_allow_html=True,
             )
 
-        current_ref = str(st.session_state.loaded_source_path or "")
-        can_import_local = bool(
-            cloud_storage is not None
-            and st.session_state.df is not None
-            and current_ref
-            and not is_cloud_ref(current_ref)
-        )
-        if st.button(
-            "将当前本地词表导入云端",
-            width="stretch",
-            disabled=not can_import_local,
-        ):
-            try:
-                row = cloud_storage.upsert_word_list(
-                    source_name=Path(current_ref).name,
-                    dataframe=st.session_state.df,
-                    encoding=str(
-                        st.session_state.loaded_encoding or "utf-8-sig"
-                    ),
-                    source_date=parse_date_from_filename(Path(current_ref).name),
-                )
-                target_ref = cloud_ref(str(row["id"]))
-                refresh_file_records()
-                st.session_state.pending_selected_file_path = target_ref
-                st.session_state.upload_message = "当前词表已安全导入云端。"
-                st.rerun()
-            except (CloudStorageError, CsvValidationError, OSError) as exc:
-                st.error(f"导入失败：{exc}")
-
-        st.markdown('<div class="xb-side-section">练习模式</div>', unsafe_allow_html=True)
-        st.radio(
-            "选择模式",
-            PRACTICE_MODES,
-            key="practice_mode",
-            label_visibility="collapsed",
-        )
-
-        st.markdown('<div class="xb-side-section">AI 记忆助手</div>', unsafe_allow_html=True)
         api_key, models = get_nvidia_settings()
         if api_key and models:
-            safe_model = html.escape(models[0])
             st.markdown(
-                f"""
-                <div class="xb-ai-status" title="{safe_model}">
+                """
+                <div class="xb-ai-status">
                     <span class="xb-ai-status-dot"></span>
-                    已配置 · 按需生成记忆卡
+                    AI 记忆卡已就绪
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -2759,30 +3667,97 @@ def render_sidebar() -> None:
                 unsafe_allow_html=True,
             )
 
-        st.markdown('<div class="xb-side-section">学习控制</div>', unsafe_allow_html=True)
-        controls_disabled = st.session_state.df is None
-        if st.button(
-            "重新开始本轮",
-            width="stretch",
-            disabled=controls_disabled,
-        ):
-            reset_round()
-            st.rerun()
-        reload_label = (
-            "从云端重新加载"
-            if is_cloud_ref(st.session_state.loaded_source_path)
-            else "从磁盘重新加载"
+        current_ref = str(st.session_state.loaded_source_path or "")
+        can_import_local = bool(
+            cloud_storage is not None
+            and st.session_state.df is not None
+            and current_ref
+            and not is_cloud_ref(current_ref)
         )
-        if st.button(
-            reload_label,
-            width="stretch",
-            disabled=not st.session_state.loaded_source_path,
-        ):
-            initialize_file_session(st.session_state.loaded_source_path)
-            st.rerun()
 
         if records:
-            render_sidebar_upload()
+            with st.expander("词表与数据管理"):
+                if st.button(
+                    "刷新词表列表",
+                    width="stretch",
+                    key="refresh_file_records",
+                ):
+                    refresh_file_records()
+                    st.rerun()
+                if st.button(
+                    "将本地词表导入云端",
+                    width="stretch",
+                    disabled=not can_import_local,
+                ):
+                    try:
+                        import_source_date = parse_date_from_filename(
+                            Path(current_ref).name
+                        )
+                        row = cloud_storage.upsert_word_list(
+                            source_name=Path(current_ref).name,
+                            dataframe=st.session_state.df,
+                            encoding=str(
+                                st.session_state.loaded_encoding or "utf-8-sig"
+                            ),
+                            source_date=import_source_date,
+                        )
+                        learned_note = ""
+                        try:
+                            learned_count = cloud_storage.sync_learning_snapshot(
+                                word_list_id=str(row["id"]),
+                                source_name=Path(current_ref).name,
+                                source_date=import_source_date,
+                                dataframe=st.session_state.df,
+                            )
+                        except CloudStorageError:
+                            learned_note = "已学词本尚未同步，请更新云端表结构。"
+                        else:
+                            st.session_state.learned_words_cache = None
+                            learned_note = (
+                                f"已同步 {learned_count} 条已学记录。"
+                            )
+                        target_ref = cloud_ref(str(row["id"]))
+                        refresh_file_records()
+                        st.session_state.pending_selected_file_path = target_ref
+                        st.session_state.upload_message = (
+                            f"当前词表已安全导入云端。{learned_note}"
+                        )
+                        st.rerun()
+                    except (
+                        CloudStorageError,
+                        CsvValidationError,
+                        OSError,
+                    ) as exc:
+                        st.error(f"导入失败：{exc}")
+                render_sidebar_upload(show_heading=False)
+
+        control_expander_label = (
+            "本轮练习设置"
+            if st.session_state.app_view == "拼写训练"
+            else "数据刷新"
+        )
+        with st.expander(control_expander_label):
+            controls_disabled = st.session_state.df is None
+            if st.session_state.app_view == "拼写训练":
+                if st.button(
+                    "重新开始本轮",
+                    width="stretch",
+                    disabled=controls_disabled,
+                ):
+                    reset_round()
+                    st.rerun()
+            reload_label = (
+                "从云端重新加载"
+                if is_cloud_ref(st.session_state.loaded_source_path)
+                else "从磁盘重新加载"
+            )
+            if st.button(
+                reload_label,
+                width="stretch",
+                disabled=not st.session_state.loaded_source_path,
+            ):
+                initialize_file_session(st.session_state.loaded_source_path)
+                st.rerun()
 
 
 def main() -> None:
@@ -2820,6 +3795,13 @@ def main() -> None:
             file_name=current_source_name(),
             mime="text/csv",
         )
+
+    if st.session_state.app_view == "复习浏览":
+        render_review_browser()
+        return
+    if st.session_state.app_view == "已学词本":
+        render_learned_notebook()
+        return
 
     render_progress()
     if st.session_state.finished:
