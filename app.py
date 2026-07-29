@@ -3549,9 +3549,9 @@ def process_next_ai_batch_item(job: dict[str, Any]) -> None:
             job["consecutive_failures"] = 0
 
     del job["queue"][0]
-    if int(job.get("consecutive_failures") or 0) >= 3:
+    if int(job.get("consecutive_failures") or 0) >= 40:
         job["status"] = "paused"
-        job["message"] = "连续 3 个单词生成失败，任务已自动暂停。"
+        job["message"] = "连续 40 个单词生成失败，任务已自动暂停。"
     elif not job["queue"]:
         job["status"] = "completed"
         job["current_word"] = ""
