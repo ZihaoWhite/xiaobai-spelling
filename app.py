@@ -2230,7 +2230,7 @@ def handle_upload() -> None:
                     source_date=source_date,
                     dataframe=prepared_df,
                 )
-            except CloudStorageError:
+            except (CloudStorageError, AttributeError):
                 learned_note = " 已学单词本尚未同步，请先更新云端表结构。"
             else:
                 st.session_state.learned_words_cache = None
@@ -2356,26 +2356,6 @@ def process_submission(user_answer: str) -> bool:
         )
         return False
 
-    if cloud_mode and cloud_storage is not None:
-        record = current_file_record() or {}
-        try:
-            cloud_storage.upsert_learning_row(
-                word_list_id=cloud_id_from_ref(source_ref),
-                source_name=str(
-                    record.get("name")
-                    or st.session_state.cloud_source_name
-                    or "云端词表.csv"
-                ),
-                source_date=str(record.get("date") or "") or None,
-                row=df.loc[row_index],
-            )
-        except CloudStorageError:
-            st.session_state.backup_warning = (
-                "本题已保存，但已学单词本暂未更新；请确认云端表结构已升级。"
-            )
-        else:
-            st.session_state.learned_words_cache = None
-
     if not cloud_mode and source_path is not None:
         st.session_state.source_signature = file_signature(source_path)
     st.session_state.file_missing = False
@@ -2387,6 +2367,32 @@ def process_submission(user_answer: str) -> bool:
     st.session_state.last_diff_html = build_letter_diff_html(
         correct_answer, user_answer
     )
+
+    # Long-term notebook sync is secondary: it must never interrupt spelling
+    # after the authoritative CSV/cloud snapshot has already been saved.
+    if cloud_mode and cloud_storage is not None:
+        record = current_file_record() or {}
+        try:
+            sync_row = getattr(cloud_storage, "upsert_learning_row", None)
+            if not callable(sync_row):
+                raise AttributeError("cloud storage client needs a restart")
+            sync_row(
+                word_list_id=cloud_id_from_ref(source_ref),
+                source_name=str(
+                    record.get("name")
+                    or st.session_state.cloud_source_name
+                    or "云端词表.csv"
+                ),
+                source_date=str(record.get("date") or "") or None,
+                row=df.loc[row_index],
+            )
+        except (CloudStorageError, AttributeError):
+            st.session_state.backup_warning = (
+                "本题已保存，但已学单词本暂未更新；"
+                "请重启应用并确认云端表结构已升级。"
+            )
+        else:
+            st.session_state.learned_words_cache = None
     return True
 
 
@@ -3189,6 +3195,10 @@ def render_learned_notebook() -> None:
         with st.spinner("正在读取历史词表并重建已学单词本…"):
             try:
                 list_count, row_count = rebuild_learned_notebook(storage)
+            except AttributeError:
+                st.session_state.learned_words_error = (
+                    "云端组件仍是旧版本，请完全重启 Streamlit 应用。"
+                )
             except CloudStorageError as exc:
                 st.session_state.learned_words_error = str(exc)
             else:
@@ -3201,6 +3211,10 @@ def render_learned_notebook() -> None:
     if st.session_state.learned_words_cache is None:
         try:
             st.session_state.learned_words_cache = storage.list_learned_words()
+        except AttributeError:
+            st.session_state.learned_words_error = (
+                "云端组件仍是旧版本，请完全重启 Streamlit 应用。"
+            )
         except CloudStorageError as exc:
             st.session_state.learned_words_error = str(exc)
     if st.session_state.learned_words_error:
@@ -3709,7 +3723,7 @@ def render_sidebar() -> None:
                                 source_date=import_source_date,
                                 dataframe=st.session_state.df,
                             )
-                        except CloudStorageError:
+                        except (CloudStorageError, AttributeError):
                             learned_note = "已学词本尚未同步，请更新云端表结构。"
                         else:
                             st.session_state.learned_words_cache = None
