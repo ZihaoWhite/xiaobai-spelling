@@ -10,9 +10,11 @@ build/
 learning_cache/*.json
 
 .backups/*.csv
+.deleted_csv/*.csv
 uploaded_csv/*.csv
 
 !.backups/.gitkeep
+!.deleted_csv/.gitkeep
 !learning_cache/.gitkeep
 !uploaded_csv/.gitkeep
 !vocabulary_data/.gitkeep

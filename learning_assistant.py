@@ -173,6 +173,7 @@ def build_learning_prompt(
 {{
   "example_en": "8到18个词的自然英文例句",
   "example_zh": "准确、自然的中文翻译",
+  "definition_en": "用简明自然的英语解释这个单词，不超过25个英文词",
   "usage_note": "一句中文用法提醒，指出常见搭配或语境",
   "spelling_tip": "一句中文拼写观察，强调容易漏写或写错的字母顺序",
   "mnemonic": "一句明确标注为联想的记忆提示，不冒充真实词源",
@@ -183,8 +184,9 @@ def build_learning_prompt(
 1. 不得编造词根、词缀、历史来源或权威词源。
 2. mnemonic 只能是帮助记忆的联想，必须使用“联想：”开头。
 3. 如果无法确认同族词，word_family 返回空数组。
-4. 例句必须正确使用目标单词，难度适合中国英语学习者。
-5. 不输出思考过程或 <think> 标签。
+4. definition_en 必须直接解释目标单词，不能只重复例句。
+5. 例句必须正确使用目标单词，难度适合中国英语学习者。
+6. 不输出思考过程或 <think> 标签。
 """.strip()
 
 
@@ -213,6 +215,7 @@ def parse_ai_card_text(content: str) -> dict[str, Any]:
     for key in (
         "example_en",
         "example_zh",
+        "definition_en",
         "usage_note",
         "spelling_tip",
         "mnemonic",
@@ -233,8 +236,12 @@ def parse_ai_card_text(content: str) -> dict[str, Any]:
         if str(item).strip()
     ][:4]
 
-    if not normalized["example_en"] or not normalized["example_zh"]:
-        raise LearningAssistantError("AI 返回的例句不完整，请重试。")
+    if (
+        not normalized["example_en"]
+        or not normalized["example_zh"]
+        or not normalized["definition_en"]
+    ):
+        raise LearningAssistantError("AI 返回的释义或例句不完整，请重试。")
     return normalized
 
 

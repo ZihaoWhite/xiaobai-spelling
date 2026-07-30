@@ -4,8 +4,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import app as app_module
 from app import (
+    REPETITIONS_PER_WORD,
     CsvValidationError,
+    archive_local_csv,
     build_audio_url,
     build_ai_batch_items,
     build_file_label,
@@ -15,6 +18,7 @@ from app import (
     choose_initial_sidebar_state,
     extract_part_of_speech,
     normalize_answer,
+    next_repetition_state,
     sort_file_records,
     update_answer_counters,
     validate_and_prepare_dataframe,
@@ -184,3 +188,34 @@ def test_ai_batch_items_cover_all_unique_missing_words() -> None:
     assert skipped == 1
     assert [item["word"] for item in pending] == ["well-being"]
     assert pending[0]["meaning"] == "幸福；健康"
+
+
+def test_word_advances_only_after_three_correct_spellings() -> None:
+    repetition, complete = next_repetition_state(True, 1)
+    assert (repetition, complete) == (2, False)
+    repetition, complete = next_repetition_state(False, repetition)
+    assert (repetition, complete) == (2, False)
+    repetition, complete = next_repetition_state(True, repetition)
+    assert (repetition, complete) == (REPETITIONS_PER_WORD, False)
+    assert next_repetition_state(True, repetition) == (1, True)
+
+
+def test_archive_local_csv_moves_file_to_recoverable_folder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    upload_dir = tmp_path / "uploaded_csv"
+    deleted_dir = tmp_path / ".deleted_csv"
+    upload_dir.mkdir()
+    source = upload_dir / "today.csv"
+    source.write_text("单词,中文释义\napple,苹果\n", encoding="utf-8")
+    monkeypatch.setattr(app_module, "BASE_DIR", tmp_path)
+    monkeypatch.setattr(app_module, "DATA_DIR", tmp_path / "vocabulary_data")
+    monkeypatch.setattr(app_module, "UPLOAD_DIR", upload_dir)
+    monkeypatch.setattr(app_module, "DELETED_CSV_DIR", deleted_dir)
+
+    archived = archive_local_csv(source)
+
+    assert not source.exists()
+    assert archived.exists()
+    assert archived.parent == deleted_dir

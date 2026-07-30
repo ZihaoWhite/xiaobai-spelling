@@ -40,6 +40,8 @@ DATA_DIR = BASE_DIR / "vocabulary_data"
 UPLOAD_DIR = BASE_DIR / "uploaded_csv"
 BACKUP_DIR = BASE_DIR / ".backups"
 LEARNING_CACHE_DIR = BASE_DIR / "learning_cache"
+DELETED_CSV_DIR = BASE_DIR / ".deleted_csv"
+REPETITIONS_PER_WORD = 3
 
 REQUIRED_COLUMNS = (
     "单词",
@@ -1424,6 +1426,31 @@ def inject_css() -> None:
             background: #f1f2ff;
             border-color: #cdd2ef;
         }
+        .xb-repetition-guide {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .7rem;
+            margin: .45rem 0 .15rem;
+            color: #59647a;
+            font-size: .78rem;
+        }
+        .xb-repetition-guide span {
+            display: inline-flex;
+            gap: .28rem;
+        }
+        .xb-repetition-guide i {
+            width: .48rem;
+            height: .48rem;
+            border-radius: 50%;
+            border: 1px solid #c7ccda;
+            background: #fff;
+        }
+        .xb-repetition-guide i.done {
+            border-color: #5a68db;
+            background: #5a68db;
+            box-shadow: 0 0 0 3px rgba(90, 104, 219, .11);
+        }
         [data-testid="stTextInput"] input {
             color: #202b42;
             caret-color: var(--xb-brand);
@@ -2000,6 +2027,8 @@ def initialize_state_defaults() -> None:
         "finished": False,
         "balloons_shown": False,
         "last_autoplay_question_key": None,
+        "current_repetition": 1,
+        "input_attempt_id": 0,
         "backed_up_paths": set(),
         "backup_paths": {},
         "save_status": "尚未修改",
@@ -2011,6 +2040,8 @@ def initialize_state_defaults() -> None:
         "submission_error": "",
         "upload_message": "",
         "upload_error": "",
+        "delete_message": "",
+        "delete_error": "",
         "file_missing": False,
         "learning_cards": {},
         "learning_card_errors": {},
@@ -2055,6 +2086,8 @@ def reset_round(question_order: Sequence[Any] | None = None) -> None:
     st.session_state.finished = len(st.session_state.question_order) == 0
     st.session_state.balloons_shown = False
     st.session_state.last_autoplay_question_key = None
+    st.session_state.current_repetition = 1
+    st.session_state.input_attempt_id = 0
     st.session_state.recent_feedback = None
     clear_round_feedback()
 
@@ -2283,6 +2316,70 @@ def handle_upload() -> None:
         st.session_state.upload_error = f"上传失败：{exc}"
 
 
+def archive_local_csv(source: Path) -> Path:
+    """Move a managed local CSV into a recoverable project trash folder."""
+    resolved = source.resolve()
+    allowed_parents = {
+        BASE_DIR.resolve(),
+        DATA_DIR.resolve(),
+        UPLOAD_DIR.resolve(),
+    }
+    if (
+        resolved.parent not in allowed_parents
+        or resolved.suffix.casefold() != ".csv"
+    ):
+        raise OSError("只能删除小白拼写管理目录中的 CSV 文件。")
+    if not resolved.exists():
+        raise OSError("所选 CSV 已不存在。")
+    DELETED_CSV_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    target = DELETED_CSV_DIR / f"{timestamp}__{resolved.name}"
+    counter = 1
+    while target.exists():
+        target = DELETED_CSV_DIR / f"{timestamp}-{counter}__{resolved.name}"
+        counter += 1
+    shutil.move(str(resolved), str(target))
+    return target
+
+
+def clear_loaded_file_session() -> None:
+    """Clear only state tied to the currently loaded vocabulary file."""
+    st.session_state.df = None
+    st.session_state.source_path = None
+    st.session_state.loaded_source_path = None
+    st.session_state.source_signature = None
+    st.session_state.loaded_encoding = None
+    st.session_state.cloud_revision = None
+    st.session_state.cloud_source_name = ""
+    st.session_state.file_missing = False
+    st.session_state.file_error = ""
+    st.session_state.save_error = ""
+    st.session_state.ai_batch_job = None
+
+
+def delete_current_word_list() -> None:
+    """Delete a cloud list or move a managed local CSV to recoverable trash."""
+    source_ref = str(st.session_state.loaded_source_path or "")
+    if not source_ref:
+        raise OSError("当前没有可删除的词表。")
+    source_name = current_source_name()
+    if is_cloud_ref(source_ref):
+        storage = get_supabase_storage()
+        if storage is None:
+            raise CloudStorageError("Supabase 配置不完整，无法删除云端词表。")
+        storage.delete_word_list(cloud_id_from_ref(source_ref))
+        message = f"云端词表“{source_name}”已永久删除。"
+    else:
+        archived = archive_local_csv(Path(source_ref))
+        message = (
+            f"本地词表“{source_name}”已移入可恢复目录 "
+            f"{archived.parent.name}/。"
+        )
+    clear_loaded_file_session()
+    refresh_file_records()
+    st.session_state.delete_message = message
+
+
 def process_submission(user_answer: str) -> bool:
     """Persist one valid answer. Return True only after an atomic save succeeds."""
     st.session_state.submission_error = ""
@@ -2438,6 +2535,41 @@ def go_to_next_question() -> None:
         clear_round_feedback()
 
 
+def next_repetition_state(
+    is_correct: bool,
+    repetition: int,
+) -> tuple[int, bool]:
+    """Return the next repetition and whether the word is complete."""
+    safe_repetition = min(
+        max(int(repetition or 1), 1),
+        REPETITIONS_PER_WORD,
+    )
+    if not is_correct:
+        return safe_repetition, False
+    if safe_repetition >= REPETITIONS_PER_WORD:
+        return 1, True
+    return safe_repetition + 1, False
+
+
+def advance_after_submission() -> None:
+    """Repeat each word until it has been spelled correctly three times."""
+    if not st.session_state.answered:
+        return
+    is_correct = bool(st.session_state.last_is_correct)
+    repetition = int(st.session_state.current_repetition or 1)
+    remember_recent_feedback()
+    st.session_state.input_attempt_id += 1
+    next_repetition, word_complete = next_repetition_state(
+        is_correct,
+        repetition,
+    )
+    st.session_state.current_repetition = next_repetition
+    if word_complete:
+        go_to_next_question()
+        return
+    clear_round_feedback()
+
+
 def remember_recent_feedback() -> None:
     """Keep a compact result visible after immediately advancing to the next word."""
     order = st.session_state.question_order
@@ -2496,7 +2628,7 @@ def render_header() -> None:
         layout_status = (
             "双栏学习 · 拼写与记忆并行"
             if st.session_state.study_layout == "学习双栏"
-            else "专注模式 · 回车自动下一词"
+            else "专注模式 · 每词正确拼写三次"
         )
     st.markdown(
         f"""
@@ -2522,9 +2654,13 @@ def render_header() -> None:
 
 def render_progress() -> None:
     total = len(st.session_state.question_order)
-    answered = min(st.session_state.session_answered, total)
+    answered = total if st.session_state.finished else min(
+        st.session_state.current_position,
+        total,
+    )
     correct = st.session_state.session_correct
-    accuracy = correct / answered if answered else 0.0
+    attempts = st.session_state.session_answered
+    accuracy = correct / attempts if attempts else 0.0
     remaining = max(total - answered, 0)
     percent = min(max(answered / total if total else 0.0, 0.0), 1.0)
     st.markdown(
@@ -2538,7 +2674,7 @@ def render_progress() -> None:
                 <span style="width:{percent * 100:.2f}%"></span>
             </div>
             <div class="xb-session-metrics">
-                <div class="xb-metric"><span>正确</span><strong>{correct}</strong></div>
+                <div class="xb-metric"><span>答题</span><strong>{attempts}</strong></div>
                 <div class="xb-metric"><span>正确率</span><strong>{accuracy:.0%}</strong></div>
                 <div class="xb-metric"><span>剩余</span><strong>{remaining}</strong></div>
             </div>
@@ -2643,6 +2779,17 @@ def get_nvidia_settings() -> tuple[str, tuple[str, ...]]:
 def render_learning_bundle(bundle: dict[str, Any]) -> None:
     dictionary = bundle.get("dictionary") or {}
     ai_card = bundle.get("ai") or {}
+    safe_definition_zh = html.escape(
+        str(bundle.get("chinese_meaning") or "暂无中文释义")
+    )
+    definition_en = str(
+        ai_card.get("definition_en")
+        or dictionary.get("definition_en")
+        or ""
+    ).strip()
+    safe_definition_en = html.escape(
+        definition_en or "English definition unavailable. Please regenerate this card."
+    )
     safe_example_en = html.escape(str(ai_card.get("example_en") or ""))
     safe_example_zh = html.escape(str(ai_card.get("example_zh") or ""))
     safe_usage = html.escape(str(ai_card.get("usage_note") or ""))
@@ -2712,6 +2859,11 @@ def render_learning_bundle(bundle: dict[str, Any]) -> None:
                 <div class="xb-ai-model">AI 已缓存</div>
             </div>
             <div class="xb-ai-grid">
+                <div class="xb-ai-item xb-ai-item-wide">
+                    <div class="xb-ai-label">Meaning · 中英释义</div>
+                    <div class="xb-ai-example">{safe_definition_en}</div>
+                    <div class="xb-ai-translation">{safe_definition_zh}</div>
+                </div>
                 <div class="xb-ai-item xb-ai-item-wide">
                     <div class="xb-ai-label">Example</div>
                     <div class="xb-ai-example">{safe_example_en}</div>
@@ -2856,6 +3008,10 @@ def render_spelling_panel(
     question_key: str,
     position: int,
 ) -> None:
+    repetition = int(st.session_state.current_repetition or 1)
+    attempt_id = int(st.session_state.input_attempt_id or 0)
+    form_question_key = f"{question_key}-try-{repetition}-{attempt_id}"
+    audio_question_key = f"{question_key}-audio-{repetition}"
     with st.container(border=True):
         st.markdown(
             f"""
@@ -2872,15 +3028,22 @@ def render_spelling_panel(
                 {f'<div class="xb-pos">{html.escape(pos)}</div>' if pos else ''}
             </div>
             <div class="xb-audio-label">美式发音 · 点击可重播</div>
+            <div class="xb-repetition-guide">
+                <strong>本词第 {repetition} / {REPETITIONS_PER_WORD} 次</strong>
+                <span>{''.join(
+                    '<i class="done"></i>' if index <= repetition else '<i></i>'
+                    for index in range(1, REPETITIONS_PER_WORD + 1)
+                )}</span>
+            </div>
             """,
             unsafe_allow_html=True,
         )
 
         should_autoplay = (
-            st.session_state.last_autoplay_question_key != question_key
+            st.session_state.last_autoplay_question_key != audio_question_key
         )
         if should_autoplay:
-            st.session_state.last_autoplay_question_key = question_key
+            st.session_state.last_autoplay_question_key = audio_question_key
         try:
             st.audio(
                 build_audio_url(word),
@@ -2896,13 +3059,13 @@ def render_spelling_panel(
                 <strong>键盘已经准备好</strong>
                 <span>·</span>
                 <kbd>Enter ↵</kbd>
-                <span>提交并自动进入下一词</span>
+                <span>正确拼写 3 次后进入下一词</span>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        input_key = f"answer-{question_key}"
-        with st.form(key=f"answer-form-{question_key}", clear_on_submit=False):
+        input_key = f"answer-{form_question_key}"
+        with st.form(key=f"answer-form-{form_question_key}", clear_on_submit=False):
             user_answer = st.text_input(
                 "输入完整英文单词",
                 placeholder="输入完整单词，然后按 Enter",
@@ -2911,15 +3074,18 @@ def render_spelling_panel(
                 label_visibility="collapsed",
             )
             submitted = st.form_submit_button(
-                "提交并进入下一词  ↵",
+                (
+                    "完成本词并进入下一词  ↵"
+                    if repetition >= REPETITIONS_PER_WORD
+                    else f"提交第 {repetition} 次拼写  ↵"
+                ),
                 type="primary",
                 width="stretch",
             )
-        render_input_autofocus(question_key)
+        render_input_autofocus(form_question_key)
         if submitted:
             if process_submission(user_answer):
-                remember_recent_feedback()
-                go_to_next_question()
+                advance_after_submission()
             st.rerun()
 
         render_answer_feedback()
@@ -3843,6 +4009,10 @@ def render_sidebar_upload(*, show_heading: bool = True) -> None:
         st.success(st.session_state.upload_message)
     if st.session_state.upload_error:
         st.error(st.session_state.upload_error)
+    if st.session_state.delete_message:
+        st.success(st.session_state.delete_message)
+    if st.session_state.delete_error:
+        st.error(st.session_state.delete_error)
     if st.session_state.save_error:
         st.error(f"保存失败：{st.session_state.save_error}")
 
@@ -4088,6 +4258,41 @@ def render_sidebar() -> None:
                     ) as exc:
                         st.error(f"导入失败：{exc}")
                 render_sidebar_upload(show_heading=False)
+                current_delete_ref = str(
+                    st.session_state.loaded_source_path or ""
+                )
+                current_delete_name = current_source_name()
+                delete_is_cloud = is_cloud_ref(current_delete_ref)
+                confirmation_key = (
+                    "confirm-delete-"
+                    + hashlib.sha1(
+                        current_delete_ref.encode("utf-8")
+                    ).hexdigest()[:12]
+                )
+                confirmed = st.checkbox(
+                    f"确认删除“{current_delete_name}”",
+                    key=confirmation_key,
+                    help=(
+                        "云端词表及其每日学习记录会永久删除；"
+                        "已经生成的 AI 记忆卡保留。"
+                        if delete_is_cloud
+                        else "本地 CSV 会移入 .deleted_csv，可手动恢复。"
+                    ),
+                )
+                if st.button(
+                    "删除当前词表",
+                    width="stretch",
+                    disabled=not confirmed or not current_delete_ref,
+                    type="secondary",
+                    key="delete_current_word_list",
+                ):
+                    st.session_state.delete_error = ""
+                    st.session_state.delete_message = ""
+                    try:
+                        delete_current_word_list()
+                    except (CloudStorageError, OSError, ValueError) as exc:
+                        st.session_state.delete_error = f"删除失败：{exc}"
+                    st.rerun()
 
         control_expander_label = (
             "本轮练习设置"
@@ -4122,7 +4327,13 @@ def main() -> None:
     configure_page()
     inject_css()
     initialize_state_defaults()
-    for directory in (DATA_DIR, UPLOAD_DIR, BACKUP_DIR, LEARNING_CACHE_DIR):
+    for directory in (
+        DATA_DIR,
+        UPLOAD_DIR,
+        BACKUP_DIR,
+        DELETED_CSV_DIR,
+        LEARNING_CACHE_DIR,
+    ):
         directory.mkdir(parents=True, exist_ok=True)
 
     if st.session_state.file_records is None:

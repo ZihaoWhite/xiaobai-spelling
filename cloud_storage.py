@@ -308,6 +308,16 @@ class SupabaseStorage:
             "dataframe": dataframe_from_payload(row.get("data")),
         }
 
+    def delete_word_list(self, record_id: str) -> None:
+        rows = self._request(
+            "DELETE",
+            WORD_LISTS_TABLE,
+            query={"id": f"eq.{record_id}"},
+            prefer="return=representation",
+        )
+        if not isinstance(rows, list) or not rows:
+            raise CloudStorageError("云端词表不存在，或已经被其他设备删除。")
+
     def upsert_word_list(
         self,
         *,

@@ -58,6 +58,7 @@ def test_parse_ai_card_text_strips_thinking_and_code_fence() -> None:
     {
       "example_en": "The young bird is still unfledged.",
       "example_zh": "这只幼鸟还没有长出羽毛。",
+      "definition_en": "Not yet fully developed or experienced.",
       "usage_note": "常用于描述尚未成熟的人或事物。",
       "spelling_tip": "注意中间的 fl 连写。",
       "mnemonic": "把 fledged 想成羽毛长成。",
@@ -67,6 +68,7 @@ def test_parse_ai_card_text_strips_thinking_and_code_fence() -> None:
     """
     card = parse_ai_card_text(content)
     assert card["example_en"].startswith("The young bird")
+    assert card["definition_en"].startswith("Not yet")
     assert card["mnemonic"].startswith("联想：")
     assert card["word_family"] == ["fledge", "fledgling"]
 
@@ -110,6 +112,7 @@ def test_nvidia_request_falls_back_after_unavailable_primary() -> None:
                                 {
                                     "example_en": "The bird is still unfledged.",
                                     "example_zh": "这只鸟尚未长出羽毛。",
+                                    "definition_en": "Not yet fully developed.",
                                     "usage_note": "可形容尚不成熟。",
                                     "spelling_tip": "注意双写与字母顺序。",
                                     "mnemonic": "联想：羽毛还没长全。",

@@ -94,6 +94,23 @@ def test_optimistic_save_reports_conflict_when_no_row_matches() -> None:
         )
 
 
+def test_delete_word_list_requests_exact_cloud_record() -> None:
+    captured = {}
+
+    def fake_urlopen(request, timeout, context):
+        captured["method"] = request.method
+        captured["url"] = request.full_url
+        return FakeResponse([{"id": "list-1"}])
+
+    storage = SupabaseStorage(
+        SupabaseConfig("https://example.supabase.co", "server-secret"),
+        urlopen_fn=fake_urlopen,
+    )
+    storage.delete_word_list("list-1")
+    assert captured["method"] == "DELETE"
+    assert "id=eq.list-1" in captured["url"]
+
+
 def test_http_auth_error_is_user_friendly() -> None:
     def fake_urlopen(request, timeout, context):
         raise HTTPError(request.full_url, 401, "bad key", None, None)
