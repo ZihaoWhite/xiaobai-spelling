@@ -2551,6 +2551,15 @@ def next_repetition_state(
     return safe_repetition + 1, False
 
 
+def build_audio_attempt_key(
+    question_key: str,
+    repetition: int,
+    attempt_id: int,
+) -> str:
+    """Give every spelling attempt its own autoplay identity."""
+    return f"{question_key}-audio-{int(repetition)}-{int(attempt_id)}"
+
+
 def advance_after_submission() -> None:
     """Repeat each word until it has been spelled correctly three times."""
     if not st.session_state.answered:
@@ -3011,7 +3020,11 @@ def render_spelling_panel(
     repetition = int(st.session_state.current_repetition or 1)
     attempt_id = int(st.session_state.input_attempt_id or 0)
     form_question_key = f"{question_key}-try-{repetition}-{attempt_id}"
-    audio_question_key = f"{question_key}-audio-{repetition}"
+    audio_question_key = build_audio_attempt_key(
+        question_key,
+        repetition,
+        attempt_id,
+    )
     with st.container(border=True):
         st.markdown(
             f"""

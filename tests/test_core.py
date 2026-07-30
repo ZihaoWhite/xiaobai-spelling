@@ -10,6 +10,7 @@ from app import (
     CsvValidationError,
     archive_local_csv,
     build_audio_url,
+    build_audio_attempt_key,
     build_ai_batch_items,
     build_file_label,
     build_letter_diff_cells,
@@ -52,6 +53,13 @@ def test_audio_url_encodes_the_complete_word() -> None:
     assert build_audio_url("rock / roll") == (
         "https://dict.youdao.com/dictvoice?audio=rock%20%2F%20roll&type=2"
     )
+
+
+def test_every_spelling_attempt_gets_a_new_audio_key() -> None:
+    first = build_audio_attempt_key("word-1", 1, 0)
+    retry = build_audio_attempt_key("word-1", 1, 1)
+    second_correct_round = build_audio_attempt_key("word-1", 2, 2)
+    assert len({first, retry, second_correct_round}) == 3
 
 
 @pytest.mark.parametrize(
