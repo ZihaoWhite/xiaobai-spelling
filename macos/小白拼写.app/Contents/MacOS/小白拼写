@@ -31,6 +31,17 @@ fi
 
 if ! is_ready; then
     : > "$LOG_FILE"
+    monitor_pid=""
+    server_pid=""
+    cleanup() {
+        if [[ -n "$monitor_pid" ]]; then
+            /bin/kill "$monitor_pid" 2>/dev/null || true
+        fi
+        if [[ -n "$server_pid" ]]; then
+            /bin/kill "$server_pid" 2>/dev/null || true
+        fi
+    }
+    trap cleanup EXIT INT TERM HUP
     (
         for _attempt in {1..120}; do
             if is_ready; then
@@ -42,12 +53,17 @@ if ! is_ready; then
         /usr/bin/osascript -e \
             'display dialog "请查看项目中的 .runtime/streamlit-launchd.log 获取详细原因。" with title "小白拼写启动失败" buttons {"好"} default button "好" with icon caution'
     ) &
-    exec "$PYTHON_BIN" -m streamlit run "$APP_FILE" \
+    monitor_pid=$!
+    "$PYTHON_BIN" -m streamlit run "$APP_FILE" \
         --server.address 127.0.0.1 \
         --server.port "$PORT" \
         --server.headless true \
         --browser.gatherUsageStats false \
-        >> "$LOG_FILE" 2>&1
+        >> "$LOG_FILE" 2>&1 &
+    server_pid=$!
+    wait "$server_pid"
+    server_status=$?
+    exit "$server_status"
 fi
 
 /usr/bin/open "$APP_URL"

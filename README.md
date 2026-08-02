@@ -60,6 +60,7 @@ streamlit run app.py
 项目包含 `macos/小白拼写.app` 和对应的 macOS `launchd` 服务配置。
 安装后，Dock 中的“小白拼写”会使用项目虚拟环境启动 Streamlit 并打开页面；
 启动后 Dock 应用会保持运行，退出该应用即停止本地服务。
+本地开发关闭了 Streamlit 的文件保存自动重载，修改代码后请退出并重新打开 Dock 应用。
 重复点击不会重复启动服务。启动日志保存在
 `.runtime/streamlit-launchd.log`，其中不应写入 API 密钥。
 
