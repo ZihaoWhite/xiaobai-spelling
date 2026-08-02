@@ -58,7 +58,8 @@ streamlit run app.py
 ### macOS Dock 一键启动
 
 项目包含 `macos/小白拼写.app` 和对应的 macOS `launchd` 服务配置。
-安装后，Dock 中的“小白拼写”会通过系统后台服务启动 Streamlit 并打开页面；
+安装后，Dock 中的“小白拼写”会使用项目虚拟环境启动 Streamlit 并打开页面；
+启动后 Dock 应用会保持运行，退出该应用即停止本地服务。
 重复点击不会重复启动服务。启动日志保存在
 `.runtime/streamlit-launchd.log`，其中不应写入 API 密钥。
 

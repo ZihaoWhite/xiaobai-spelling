@@ -2626,6 +2626,93 @@ def render_input_autofocus(question_key: str) -> None:
     )
 
 
+def render_attempt_audio_trigger(attempt_key: str, word: str) -> None:
+    """Play pronunciation once when the learner starts this typing attempt."""
+    st.html(
+        f"""
+        <script>
+        (() => {{
+            const attemptKey = {attempt_key!r};
+            const spokenWord = {word.strip()!r};
+            const attachAttemptAudio = () => {{
+                const input = [...document.querySelectorAll('input')]
+                    .find((element) =>
+                        element.getAttribute('aria-label') === '输入完整英文单词'
+                        && !element.disabled
+                    );
+                const audio = [...document.querySelectorAll('audio')]
+                    .find((element) => element.src || element.querySelector('source'));
+                if (!input || !audio || input.dataset.xbAudioBound === attemptKey) {{
+                    return;
+                }}
+                input.dataset.xbAudioBound = attemptKey;
+                const playAttempt = (event) => {{
+                    const isTypingKey = event.type === 'keydown'
+                        && typeof event.key === 'string'
+                        && event.key.length === 1
+                        && !event.metaKey
+                        && !event.ctrlKey
+                        && !event.altKey;
+                    const isPaste = event.type === 'paste';
+                    if ((!isTypingKey && !isPaste)
+                        || input.dataset.xbAudioPlayed === attemptKey) {{
+                        return;
+                    }}
+                    input.dataset.xbAudioPlayed = attemptKey;
+                    input.dataset.xbAudioStatus = 'requested';
+                    const speakFallback = () => {{
+                        input.dataset.xbAudioStatus = 'system-voice';
+                        if ('speechSynthesis' in window && spokenWord) {{
+                            window.speechSynthesis.cancel();
+                            const utterance = new SpeechSynthesisUtterance(spokenWord);
+                            utterance.lang = 'en-US';
+                            utterance.rate = 0.88;
+                            window.speechSynthesis.speak(utterance);
+                        }}
+                    }};
+                    const retryDirectAudio = () => {{
+                        input.dataset.xbAudioStatus = 'direct-audio';
+                        try {{
+                            const directAudio = new Audio(audio.currentSrc || audio.src);
+                            window.__xbAttemptAudio = directAudio;
+                            const retry = directAudio.play();
+                            if (retry && typeof retry.catch === 'function') {{
+                                retry.catch(speakFallback);
+                            }}
+                        }} catch (_error) {{
+                            speakFallback();
+                        }}
+                    }};
+                    try {{
+                        audio.currentTime = 0;
+                        const playback = audio.play();
+                        if (playback && typeof playback.then === 'function') {{
+                            playback
+                                .then(() => {{
+                                    input.dataset.xbAudioStatus = 'playing';
+                                }})
+                                .catch(retryDirectAudio);
+                        }}
+                    }} catch (_error) {{
+                        retryDirectAudio();
+                    }}
+                }};
+                input.addEventListener('keydown', playAttempt, {{ capture: true }});
+                input.addEventListener('paste', playAttempt, {{ capture: true }});
+            }};
+            requestAnimationFrame(() => {{
+                attachAttemptAudio();
+                window.setTimeout(attachAttemptAudio, 80);
+                window.setTimeout(attachAttemptAudio, 220);
+            }});
+        }})();
+        </script>
+        """,
+        width="content",
+        unsafe_allow_javascript=True,
+    )
+
+
 def render_header() -> None:
     if st.session_state.app_view == "复习浏览":
         layout_status = "复习模式 · 单词与记忆卡联动"
@@ -3040,7 +3127,7 @@ def render_spelling_panel(
                 <div class="xb-meaning">{html.escape(display_meaning)}</div>
                 {f'<div class="xb-pos">{html.escape(pos)}</div>' if pos else ''}
             </div>
-            <div class="xb-audio-label">美式发音 · 点击可重播</div>
+            <div class="xb-audio-label">美式发音 · 每次开始输入时自动播放</div>
             <div class="xb-repetition-guide">
                 <strong>本词第 {repetition} / {REPETITIONS_PER_WORD} 次</strong>
                 <span>{''.join(
@@ -3052,16 +3139,11 @@ def render_spelling_panel(
             unsafe_allow_html=True,
         )
 
-        should_autoplay = (
-            st.session_state.last_autoplay_question_key != audio_question_key
-        )
-        if should_autoplay:
-            st.session_state.last_autoplay_question_key = audio_question_key
         try:
             st.audio(
                 build_audio_url(word),
                 format="audio/mpeg",
-                autoplay=should_autoplay,
+                autoplay=False,
             )
         except Exception:
             st.caption("发音暂时不可用，不影响继续答题。")
@@ -3096,6 +3178,7 @@ def render_spelling_panel(
                 width="stretch",
             )
         render_input_autofocus(form_question_key)
+        render_attempt_audio_trigger(audio_question_key, word)
         if submitted:
             if process_submission(user_answer):
                 advance_after_submission()
