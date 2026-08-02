@@ -7,7 +7,7 @@ PYTHON_BIN="$PROJECT_DIR/.venv/bin/python"
 APP_FILE="$PROJECT_DIR/app.py"
 RUNTIME_DIR="$PROJECT_DIR/.runtime"
 LOG_FILE="$RUNTIME_DIR/streamlit-launchd.log"
-PORT="8501"
+PORT="8510"
 APP_URL="http://127.0.0.1:$PORT"
 HEALTH_URL="$APP_URL/_stcore/health"
 
